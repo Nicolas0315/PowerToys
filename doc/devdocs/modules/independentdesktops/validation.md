@@ -32,7 +32,7 @@ reused handles, dragged windows, wraparound, reset and capacity refusal.
 `RuntimeTests.cpp` exercises real Win32 identities, guardian readiness, hide/show
 acknowledgement, exclusion of originally hidden windows, marker mismatch, minimized
 state, guardian death, foreign-process crash restoration, double-failure recovery
-and the invisible installer's close endpoint. There are 19 model cases and 10
+and the invisible installer's close endpoint. There are 19 model cases, one shared IPC ownership case, and 10
 runtime cases after these additions; passing evidence must identify the commit.
 
 ## Reproduction commands
@@ -154,12 +154,23 @@ attempts are retained and linked. ARM64 execution is not covered by an x64 run.
   and sends 11 published malformed JSON/type/range/modifier inputs, preserving
   the read-only baseline of all five shortcuts after each rejection. Parsing commits shortcuts only
   after validating the whole input; rejected input is not saved. The 19 shared
-  model cases plus this DLL-boundary case make 20 native adapter tests.
+  model cases plus this DLL-boundary case make 21 native adapter tests with the added shared IPC ownership case.
 
 - Review caught a test fixture that would use the production saver to establish a
   custom shortcut and overwrite a local tester's settings. The fixture now captures
   the current hotkeys without saving anything and asserts every field is unchanged
   after each rejected input. This avoids a crash-sensitive save/restore workaround.
+
+- Follow-up review traced the same invalid types through Runner's preprocessing,
+  which previously threw before reaching the module. The actual Runner callback
+  now owns and releases received messages on every path and contains all dispatch
+  exceptions, including logging failures. A shared production helper safely probes
+  `hotkey_changed`, preserving PowerToys Run's false/true behavior. The native test
+  routes syntactically valid malformed values through these production dispatch
+  helpers to the built DLL. The portable ownership test passes for success,
+  standard/nonstandard exceptions and null input; removing exception containment
+  made the test fail (exit 1), then restoring it passed (exit 0).
+  These helper tests do not claim to exercise a live Settings pipe or full UI.
 
 ## Required physical/interactive acceptance
 

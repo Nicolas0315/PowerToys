@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 #include "../WorkspaceModel.h"
+#include "../../../runner/settings_dispatch.h"
 #include <functional>
 #include <random>
 #include <iostream>
@@ -236,6 +237,21 @@ inline std::vector<std::pair<std::string, std::function<void()>>> CoreCases()
         root.monitor = L"left";
         model.Observe(L"native-1", { left, root, dialog });
         Check(model.ActivationWorkspace(root.id, L"native-1", L"left") == 0, "whole group dragged left can activate destination");
+    });
+    cases.emplace_back("ipc_callback_contains_errors_and_releases_owned_message", [] {
+        struct Message
+        {
+            unsigned& destroyed;
+            ~Message() { ++destroyed; }
+        };
+        unsigned destroyed = 0;
+        Check(RunnerSettingsDispatch::DispatchOwned(new Message{ destroyed }, [](const Message&) {}), "valid callback completes");
+        Check(destroyed == 1, "successful dispatch releases its payload");
+        Check(!RunnerSettingsDispatch::DispatchOwned(new Message{ destroyed }, [](const Message&) { throw std::runtime_error("synthetic callback error"); }), "standard exception cannot escape the callback boundary");
+        Check(destroyed == 2, "failed standard dispatch releases its payload");
+        Check(!RunnerSettingsDispatch::DispatchOwned(new Message{ destroyed }, [](const Message&) { throw 17; }), "nonstandard WinRT-style exception cannot escape");
+        Check(destroyed == 3, "failed nonstandard dispatch releases its payload");
+        Check(!RunnerSettingsDispatch::DispatchOwned(static_cast<Message*>(nullptr), [](const Message&) { throw std::runtime_error("must not be called"); }), "null payload is safely refused");
     });
     return cases;
 }

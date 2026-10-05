@@ -8,6 +8,7 @@
 #include <windows.h>
 #include <roapi.h>
 #include <modules/interface/powertoy_module_interface.h>
+#include <runner/module_settings_dispatch.h>
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 namespace IndependentDesktopsTests
 {
@@ -33,6 +34,10 @@ namespace IndependentDesktopsTests
         }
 
     public:
+        TEST_METHOD (ipc_callback_contains_errors_and_releases_owned_message)
+        {
+            Run("ipc_callback_contains_errors_and_releases_owned_message");
+        }
         TEST_METHOD (malformed_settings_do_not_escape_the_module_boundary)
         {
             struct Apartment
@@ -90,11 +95,44 @@ namespace IndependentDesktopsTests
                 {
                     Assert::Fail(L"Invalid settings escaped the module boundary");
                 }
+                json::JsonValue value;
+                if (json::JsonValue::TryParse(input, value))
+                {
+                    json::JsonObject modules;
+                    modules.SetNamedValue(L"IndependentDesktops", value);
+                    json::JsonObject envelope;
+                    envelope.SetNamedValue(L"powertoys", json::value(modules));
+                    bool delivered = false;
+                    const bool dispatched = RunnerSettingsDispatch::DispatchOwned(new std::wstring(envelope.Stringify().c_str()), [&](const std::wstring& message) {
+                        const auto received = json::JsonObject::Parse(message).GetNamedObject(L"powertoys");
+                        RunnerSettingsDispatch::DispatchModuleSettings(received, [&](const std::wstring& key, const std::wstring& settings, bool hotkeyUpdated) {
+                            Assert::IsTrue(key == L"IndependentDesktops" && hotkeyUpdated, L"Malformed optional probe preserves default routing");
+                            module->set_config(settings.c_str());
+                            delivered = true;
+                        });
+                    });
+                    Assert::IsTrue(dispatched && delivered, L"Typed malformed IPC reaches the rejecting module without escaping Runner helpers");
+                }
                 PowertoyModuleIface::Hotkey hotkeys[5]{};
                 Assert::AreEqual(std::size_t{ 5 }, module->get_hotkeys(hotkeys, 5));
                 for (std::size_t i = 0; i < 5; ++i)
                     Assert::IsTrue(hotkeys[i] == baseline[i] && hotkeys[i].id == baseline[i].id && hotkeys[i].isShown == baseline[i].isShown, L"Rejected input preserves the complete prior hotkey configuration");
                 Assert::IsFalse(module->is_enabled(), L"Settings parsing cannot start desktop management");
+            }
+            for (const bool updated : { false, true })
+            {
+                json::JsonObject properties;
+                properties.SetNamedValue(L"hotkey_changed", json::value(updated));
+                json::JsonObject settings;
+                settings.SetNamedValue(L"properties", json::value(properties));
+                json::JsonObject modules;
+                modules.SetNamedValue(L"PowerLauncher", json::value(settings));
+                bool delivered = false;
+                RunnerSettingsDispatch::DispatchModuleSettings(modules, [&](const std::wstring& key, const std::wstring&, bool hotkeyUpdated) {
+                    Assert::IsTrue(key == L"PowerLauncher" && hotkeyUpdated == updated, L"PowerToys Run hotkey_changed behavior is preserved");
+                    delivered = true;
+                });
+                Assert::IsTrue(delivered, L"Existing module probe still routes");
             }
         }
         TEST_METHOD (foreground_cross_monitor_dialog_cannot_select_unrelated_monitor)

@@ -28,6 +28,8 @@
 #include <common/updating/updateState.h>
 #include <common/themes/windows_colors.h>
 #include "settings_window.h"
+#include "settings_dispatch.h"
+#include "module_settings_dispatch.h"
 #include "bug_report.h"
 
 #define BUFSIZE 1024
@@ -166,29 +168,13 @@ void send_json_config_to_module(const std::wstring& module_key, const std::wstri
 
 void dispatch_json_config_to_modules(const json::JsonObject& powertoys_configs)
 {
-    for (const auto& powertoy_element : powertoys_configs)
-    {
-        const auto element = powertoy_element.Value().Stringify();
-
-        /* As PowerToys Run hotkeys are not registered by the runner, hotkey updates are
-         * triggered only when hotkey properties change to avoid incorrect conflict detection; 
-         * otherwise, the existing logic remains.
-         */
-        auto settings = powertoy_element.Value().GetObjectW();
-        bool hotkeyUpdated = true;
-        if (settings.HasKey(L"properties"))
-        {
-            const auto properties = settings.GetNamedObject(L"properties");
-
-            // Currently, only PowerToys Run settings use the 'hotkey_changed' property.
-            if (properties.HasKey(L"hotkey_changed"))
-            {
-                json::get(properties, L"hotkey_changed", hotkeyUpdated, true);
-            }
-        }
-        
-        send_json_config_to_module(powertoy_element.Key().c_str(), element.c_str(), hotkeyUpdated);
-    }
+    /* As PowerToys Run hotkeys are not registered by the runner, hotkey updates are
+     * triggered only when hotkey properties change to avoid incorrect conflict detection;
+     * otherwise, the existing logic remains.
+     */
+    RunnerSettingsDispatch::DispatchModuleSettings(powertoys_configs, [](const std::wstring& moduleKey, const std::wstring& settings, bool hotkeyUpdated) {
+        send_json_config_to_module(moduleKey, settings, hotkeyUpdated);
+    });
 };
 
 void dispatch_received_json(const std::wstring& json_to_parse)
@@ -356,11 +342,22 @@ void dispatch_received_json(const std::wstring& json_to_parse)
     return;
 }
 
-void dispatch_received_json_callback(PVOID data)
+void dispatch_received_json_callback(PVOID data) noexcept
 {
-    std::wstring* msg = static_cast<std::wstring*>(data);
-    dispatch_received_json(*msg);
-    delete msg;
+    const bool dispatched = RunnerSettingsDispatch::DispatchOwned(static_cast<std::wstring*>(data), [](const std::wstring& msg) {
+        dispatch_received_json(msg);
+    });
+    if (!dispatched)
+    {
+        try
+        {
+            Logger::error(L"Settings IPC dispatch failed");
+        }
+        catch (...)
+        {
+            // Logging failure must not escape a Win32 callback either.
+        }
+    }
 }
 
 void receive_json_send_to_main_thread(const std::wstring& msg)
