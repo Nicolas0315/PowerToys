@@ -10,6 +10,9 @@ on:
       - 'src/modules/IndependentDesktops/**'
       - '.github/workflows/independent-desktops-validation.yml'
   workflow_dispatch:
+concurrency:
+  group: independent-desktops-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -48,6 +51,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           tools/build/build.ps1 -Platform x64 -Configuration Release -Path src/modules/IndependentDesktops/Tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build modified installer custom actions
+        run: tools/build/build.ps1 -Platform x64 -Configuration Release -Path installer/PowerToysSetupCustomActionsVNext /p:RunBuildEvents=false
       - name: Run the native test project after a successful build
         run: |
           $vs = & "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe" -latest -property installationPath

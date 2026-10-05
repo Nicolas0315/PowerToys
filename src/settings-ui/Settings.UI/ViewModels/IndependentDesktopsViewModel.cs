@@ -17,6 +17,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
     public partial class IndependentDesktopsViewModel : PageViewModelBase
     {
         protected override string ModuleName => IndependentDesktopsSettings.ModuleName;
+
         private readonly SettingsUtils settingsUtils;
         private readonly GeneralSettings generalSettingsConfig;
         private readonly IndependentDesktopsSettings settings;
@@ -58,6 +59,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
                 {
                     return;
                 }
+
                 isEnabled = value;
                 generalSettingsConfig.Enabled.IndependentDesktops = value;
                 sendConfigMessage(new OutGoingGeneralSettings(generalSettingsConfig).ToString());
@@ -93,6 +95,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             {
                 return;
             }
+
             field = value;
             save(value);
             OnPropertyChanged(propertyName);
