@@ -8,6 +8,10 @@ on:
       - 'src/runner/**'
       - 'src/common/GPOWrapper/**'
       - 'src/common/utils/gpo.h'
+      - 'src/common/ManagedCommon/ModuleType.cs'
+      - 'src/gpo/assets/**'
+      - '.pipelines/ESRPSigning_core.json'
+      - 'tools/Verification scripts/**'
       - 'installer/**'
       - 'PowerToys.slnx'
       - '.github/workflows/independent-desktops-validation.yml'
@@ -18,6 +22,10 @@ on:
       - 'src/runner/**'
       - 'src/common/GPOWrapper/**'
       - 'src/common/utils/gpo.h'
+      - 'src/common/ManagedCommon/ModuleType.cs'
+      - 'src/gpo/assets/**'
+      - '.pipelines/ESRPSigning_core.json'
+      - 'tools/Verification scripts/**'
       - 'installer/**'
       - 'PowerToys.slnx'
       - '.github/workflows/independent-desktops-validation.yml'
@@ -110,6 +118,7 @@ jobs:
         with:
           name: independent-desktops-fuzz-results
           path: |
+            src/modules/IndependentDesktops/Fuzz/corpus/*
             fuzz-build.txt
             fuzz-results.txt
             crash-*
