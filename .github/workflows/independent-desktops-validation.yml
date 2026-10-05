@@ -108,10 +108,16 @@ jobs:
           clang++ --version
           clang++ -std=c++20 '-fsanitize=fuzzer,address' -DNOMINMAX -DUNICODE -D_UNICODE src/modules/IndependentDesktops/Fuzz/ArgumentFuzzer.cpp src/modules/IndependentDesktops/Recovery.cpp src/modules/IndependentDesktops/WindowOperations.cpp -luser32 -ladvapi32 -o IndependentDesktopsArgumentFuzzer.exe 2>&1 | Tee-Object fuzz-build.txt
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $resource = & clang++ -print-resource-dir
+          $asan = Join-Path $resource 'lib/windows/clang_rt.asan_dynamic-x86_64.dll'
+          if (-not (Test-Path $asan)) { throw "Matching ASan runtime missing: $asan" }
+          Copy-Item $asan .
       - name: Run deterministic fuzz inputs and retain failures
         run: |
           ./IndependentDesktopsArgumentFuzzer.exe -seed=49420 -runs=10000 -max_len=64 -artifact_prefix=./ src/modules/IndependentDesktops/Fuzz/corpus 2>&1 | Tee-Object fuzz-results.txt
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $fuzzExit = $LASTEXITCODE
+          "Fuzzer exit code: $fuzzExit" | Tee-Object -Append fuzz-results.txt
+          if ($fuzzExit -ne 0) { exit $fuzzExit }
       - name: Upload fuzz evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

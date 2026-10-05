@@ -13,6 +13,8 @@ clang++ -std=c++20 '-fsanitize=fuzzer,address' -DNOMINMAX -DUNICODE -D_UNICODE `
   src/modules/IndependentDesktops/Recovery.cpp `
   src/modules/IndependentDesktops/WindowOperations.cpp `
   -luser32 -ladvapi32 -o IndependentDesktopsArgumentFuzzer.exe
+$resource = clang++ -print-resource-dir
+Copy-Item (Join-Path $resource 'lib/windows/clang_rt.asan_dynamic-x86_64.dll') .
 ./IndependentDesktopsArgumentFuzzer.exe -seed=49420 -runs=10000 -max_len=64 src/modules/IndependentDesktops/Fuzz/corpus
 ```
 
