@@ -21,8 +21,8 @@ namespace IndependentDesktops
         std::optional<WindowId> Register(HWND window);
         std::optional<WindowId> Find(HWND window) const;
         void Prune();
-        bool Hide(const WindowId& id);
-        bool Show(const WindowId& id);
+        bool Hide(const WindowId& id, DWORD timeoutMs = 1000);
+        bool Show(const WindowId& id, DWORD timeoutMs = 1000);
         bool RestoreAll();
         void UnregisterAll();
     };
