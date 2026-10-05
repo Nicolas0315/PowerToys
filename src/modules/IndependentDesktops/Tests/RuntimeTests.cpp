@@ -43,7 +43,7 @@ int wmain(int argc, wchar_t** argv)
         if (!ParseHandle(argv[2], mapping) || !ParseHandle(argv[3], ready) || !ParseHandle(argv[4], parent)) return 2;
         return RunRecovery(mapping, ready, parent);
     }
-    if (argc == 3 && std::wstring(argv[1]) == L"--crash-owner")
+    if (argc == 3 && (std::wstring(argv[1]) == L"--crash-owner" || std::wstring(argv[1]) == L"--crash-both-owner"))
     {
         HANDLE value{};
         if (!ParseHandle(argv[2], value)) return 2;
@@ -51,6 +51,10 @@ int wmain(int argc, wchar_t** argv)
         if (!session.Start(Executable())) return 3;
         const auto id = session.Register(static_cast<HWND>(value));
         if (!id || !session.Hide(*id)) return 4;
+        if (std::wstring(argv[1]) == L"--crash-both-owner")
+        {
+            if (!TerminateProcess(session.ProcessHandle(), 99) || WaitForSingleObject(session.ProcessHandle(), 5000) != WAIT_OBJECT_0) return 6;
+        }
         // Deliberately bypass destructors; the watchdog must restore the foreign window.
         TerminateProcess(GetCurrentProcess(), 88);
         return 5;
@@ -145,6 +149,28 @@ int wmain(int argc, wchar_t** argv)
         const auto cleanupDeadline = GetTickCount64() + 5000;
         while (GetPropW(fixture.window, RecoveryProperty) && GetTickCount64() < cleanupDeadline) Sleep(10);
         Check(GetPropW(fixture.window, RecoveryProperty) == nullptr, "watchdog removed ownership marker");
+    });
+    test("next_start_recovers_windows_after_both_processes_die", [] {
+        Fixture fixture;
+        const auto executable = Executable();
+        std::wstring command = L"\"" + executable + L"\" --crash-both-owner " + std::to_wstring(reinterpret_cast<ULONG_PTR>(fixture.window));
+        STARTUPINFOW startup{ sizeof(startup) };
+        PROCESS_INFORMATION process{};
+        Check(CreateProcessW(executable.c_str(), command.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startup, &process), "start double-fault owner");
+        UniqueHandle child(process.hProcess), thread(process.hThread);
+        const auto deadline = GetTickCount64() + 10000;
+        while (WaitForSingleObject(child.get(), 0) == WAIT_TIMEOUT && GetTickCount64() < deadline)
+        {
+            MSG message{};
+            while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) { TranslateMessage(&message); DispatchMessageW(&message); }
+            Sleep(10);
+        }
+        DWORD exit{}; GetExitCodeProcess(child.get(), &exit);
+        Check(exit == 88 && !IsWindowVisible(fixture.window), "both owner and watchdog died after hide");
+        UniqueHandle exclusive(CreateMutexW(nullptr, TRUE, ManagerMutex));
+        Check(exclusive && GetLastError() != ERROR_ALREADY_EXISTS, "orphan recovery requires an isolated manager");
+        Check(RestoreTaggedWindows(), "restore orphaned visibility intent");
+        Check(IsWindowVisible(fixture.window) && !GetPropW(fixture.window, RecoveryProperty), "next start restores and clears markers");
     });
     std::cout << "RESULT failures=" << failures << '\n';
     return failures == 0 ? 0 : 1;

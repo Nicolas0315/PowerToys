@@ -7,6 +7,9 @@
 namespace IndependentDesktops
 {
     inline constexpr wchar_t RecoveryProperty[] = L"PowerToys.IndependentDesktops.Recovery.6EAF3B79";
+    inline constexpr wchar_t RestoreIntentProperty[] = L"PowerToys.IndependentDesktops.RestoreIntent.6EAF3B79";
+    // Caller must exclusively own ManagerMutex; this never runs alongside a live manager.
+    bool RestoreTaggedWindows();
     std::optional<WindowId> IdentifyWindow(HWND window);
     bool MatchesWindow(const WindowId& id, bool requireMarker = true);
     bool WaitForVisibility(const WindowId& id, bool visible, DWORD timeoutMs = 1000);

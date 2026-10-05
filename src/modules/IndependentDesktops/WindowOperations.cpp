@@ -3,6 +3,7 @@
 #include "WindowOperations.h"
 namespace IndependentDesktops
 {
+    bool RestoreTaggedWindows() { return false; }
     std::optional<WindowId> IdentifyWindow(HWND window)
     {
         if (!IsWindow(window)) return {};
