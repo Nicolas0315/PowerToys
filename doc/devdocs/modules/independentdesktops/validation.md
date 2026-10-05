@@ -139,6 +139,14 @@ attempts are retained and linked. ARM64 execution is not covered by an x64 run.
   plain volatile reads were insufficient to establish ARM64 acquire ordering.
   x64 tests do not certify ARM64 execution or prove absence of every timing race.
 
+- The next Settings UI compile caught seven new ViewModel spacing diagnostics
+  (SA1513/SA1516). Blank lines were added without changing behavior.
+- The sanitized fuzzer compiled, but its first launch lacked the matching ASan
+  runtime DLL. After staging that DLL, output showed an unquoted argument also
+  included the checkout directory as a corpus. Explicit argument-array passing
+  limits the intended input corpus to the five checked-in synthetic seed files;
+  that earlier run is not counted as the intended corpus validation.
+
 ## Required physical/interactive acceptance
 
 Every row below remains **unexecuted** until recorded with the tested commit,

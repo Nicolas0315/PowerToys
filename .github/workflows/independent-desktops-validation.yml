@@ -114,7 +114,8 @@ jobs:
           Copy-Item $asan .
       - name: Run deterministic fuzz inputs and retain failures
         run: |
-          ./IndependentDesktopsArgumentFuzzer.exe -seed=49420 -runs=10000 -max_len=64 -artifact_prefix=./ src/modules/IndependentDesktops/Fuzz/corpus 2>&1 | Tee-Object fuzz-results.txt
+          $fuzzArguments = @('-seed=49420', '-runs=10000', '-max_len=64', 'src/modules/IndependentDesktops/Fuzz/corpus')
+          & ./IndependentDesktopsArgumentFuzzer.exe @fuzzArguments 2>&1 | Tee-Object fuzz-results.txt
           $fuzzExit = $LASTEXITCODE
           "Fuzzer exit code: $fuzzExit" | Tee-Object -Append fuzz-results.txt
           if ($fuzzExit -ne 0) { exit $fuzzExit }

@@ -70,9 +70,13 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
         public bool IsEnabledGpoConfigured => enabledStateIsGpoConfigured;
 
         public HotkeySettings PreviousDesktopShortcut { get => previousDesktopShortcut; set => UpdateShortcut(ref previousDesktopShortcut, value, settings.Properties.DefaultPreviousDesktopShortcut, shortcut => settings.Properties.PreviousDesktopShortcut = shortcut, nameof(PreviousDesktopShortcut)); }
+
         public HotkeySettings NextDesktopShortcut { get => nextDesktopShortcut; set => UpdateShortcut(ref nextDesktopShortcut, value, settings.Properties.DefaultNextDesktopShortcut, shortcut => settings.Properties.NextDesktopShortcut = shortcut, nameof(NextDesktopShortcut)); }
+
         public HotkeySettings MovePreviousDesktopShortcut { get => movePreviousDesktopShortcut; set => UpdateShortcut(ref movePreviousDesktopShortcut, value, settings.Properties.DefaultMovePreviousDesktopShortcut, shortcut => settings.Properties.MovePreviousDesktopShortcut = shortcut, nameof(MovePreviousDesktopShortcut)); }
+
         public HotkeySettings MoveNextDesktopShortcut { get => moveNextDesktopShortcut; set => UpdateShortcut(ref moveNextDesktopShortcut, value, settings.Properties.DefaultMoveNextDesktopShortcut, shortcut => settings.Properties.MoveNextDesktopShortcut = shortcut, nameof(MoveNextDesktopShortcut)); }
+
         public HotkeySettings RestoreWindowsShortcut { get => restoreWindowsShortcut; set => UpdateShortcut(ref restoreWindowsShortcut, value, settings.Properties.DefaultRestoreWindowsShortcut, shortcut => settings.Properties.RestoreWindowsShortcut = shortcut, nameof(RestoreWindowsShortcut)); }
 
         public void RefreshEnabledState()
