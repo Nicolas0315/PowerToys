@@ -5,8 +5,8 @@ connected monitor. It does not create native Windows virtual desktops or replace
 Task View. The feature is disabled by default.
 
 This implements the independently switchable monitor workflow discussed in
-[#49420](https://github.com/microsoft/PowerToys/issues/49420), using a separately
-approved window-group approach. It does not implement the other features listed
+[#49420](https://github.com/microsoft/PowerToys/issues/49420), using an experimental
+window-group approach. It does not implement the other features listed
 in that issue, and does not claim to resolve native per-monitor virtual desktops.
 
 ## Using the module

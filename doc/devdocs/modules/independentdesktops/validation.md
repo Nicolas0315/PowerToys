@@ -66,8 +66,13 @@ tools/build/build.ps1 -Platform x64 -Configuration Release -Path src/modules/Ind
 tools/build/build.ps1 -Platform x64 -Configuration Release -Path src/modules/IndependentDesktops/ModuleInterface
 tools/build/build.ps1 -Platform x64 -Configuration Release -Path src/modules/IndependentDesktops/Tests
 # After all builds exit 0, use VS Test Explorer or vstest.console.exe:
-vstest.console.exe x64/Release/tests/IndependentDesktops/IndependentDesktopsUnitTests.dll /Logger:trx
+vstest.console.exe x64/Release/tests/IndependentDesktops/IndependentDesktopsUnitTests.dll /Logger:trx /Platform:x64 -- RunConfiguration.TreatNoTestsAsError=true
 ```
+
+The current official Azure pipeline discovers native DLLs using `*UnitTest*.dll`
+in `.pipelines/v2/templates/job-build-project.yml`; the native test project matches
+that pattern. Installer root-output harvesting and explicit signing include both
+new binaries. The obsolete paths in the PR template are not used as evidence.
 
 Settings model tests live in `Settings.UI.UnitTests/ModelsTests/IndependentDesktopsSettingsTests.cs`.
 Build the Settings unit-test project with repository scripts before running
@@ -75,7 +80,7 @@ the full Settings regression suite, since module metadata and GeneralSettings ar
 
 ```powershell
 tools/build/build.ps1 -Platform x64 -Configuration Release -Path src/settings-ui/Settings.UI.UnitTests
-vstest.console.exe Release/x64/tests/SettingsTests/Settings.UI.UnitTests.dll /Logger:trx
+vstest.console.exe Release/x64/tests/SettingsTests/Settings.UI.UnitTests.dll /Logger:trx /Platform:x64 -- RunConfiguration.TreatNoTestsAsError=true
 ```
  The existing Settings navigation smoke suite includes the new page.
 Follow the repository's supported test runner instructions; do not substitute
@@ -116,6 +121,9 @@ attempts are retained and linked. ARM64 execution is not covered by an x64 run.
 - [First fuzz attempt](https://github.com/Nicolas0315/PowerToys/actions/runs/37324656134):
   a PowerShell unquoted comma in the sanitizer option caused a parser error before
   compilation. The option was quoted without removing sanitizers or reducing inputs.
+- A subsequent fuzz compile exposed an x86 library environment with an x64 LLVM
+  target (`LNK4272` / unresolved runtime symbols). The workflow now explicitly
+  launches an x64 Visual Studio developer shell; sanitizers remain enabled.
 - Independent specification review found an app-hidden owned dialog on another
   monitor could permit a partial transition. A new model regression failed before
   the fix; validation now rejects the whole affected group for both Select and Move.

@@ -8,7 +8,7 @@ Inputs are capped at 64 bytes and truncated at NUL to reflect the API contract.
 In an x64 Visual Studio developer shell with LLVM on PATH:
 
 ```powershell
-clang++ -std=c++20 -fsanitize=fuzzer,address -DNOMINMAX -DUNICODE -D_UNICODE `
+clang++ -std=c++20 '-fsanitize=fuzzer,address' -DNOMINMAX -DUNICODE -D_UNICODE `
   src/modules/IndependentDesktops/Fuzz/ArgumentFuzzer.cpp `
   src/modules/IndependentDesktops/Recovery.cpp `
   src/modules/IndependentDesktops/WindowOperations.cpp `
