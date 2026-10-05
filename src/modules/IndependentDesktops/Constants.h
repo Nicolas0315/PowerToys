@@ -10,6 +10,8 @@ namespace IndependentDesktops
     inline constexpr std::size_t MaxTrackedWindows = 1024;
     inline constexpr wchar_t ModuleKey[] = L"IndependentDesktops";
     inline constexpr wchar_t ExecutableName[] = L"PowerToys.IndependentDesktops.exe";
+    inline constexpr wchar_t ReadyEvent[] = L"Local\\PowerToys_IndependentDesktops_Ready_6EAF3B79";
+    inline constexpr wchar_t ManagerMutex[] = L"Local\\PowerToys_IndependentDesktops_Manager_6EAF3B79";
     enum class Command : unsigned { Previous, Next, MovePrevious, MoveNext, Restore, Stop, Count };
     inline constexpr const wchar_t* EventNames[] = {
         L"Local\\PowerToys_IndependentDesktops_Previous_6EAF3B79",

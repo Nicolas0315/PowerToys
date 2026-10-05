@@ -1,0 +1,11 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT license.
+#include "resource.h"
+#include <windows.h>
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+STRINGTABLE
+BEGIN
+    IDS_WORKSPACE_STATUS "Workspace %u of %u"
+    IDS_OPERATION_REFUSED "Workspace switch unavailable. Windows remain in place."
+    IDS_WINDOWS_RESTORED "All managed windows restored."
+END

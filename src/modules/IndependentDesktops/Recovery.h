@@ -20,6 +20,7 @@ namespace IndependentDesktops
         HANDLE ProcessHandle() const;
         std::optional<WindowId> Register(HWND window);
         std::optional<WindowId> Find(HWND window) const;
+        std::size_t RegisteredCount() const;
         void Prune();
         bool Hide(const WindowId& id, DWORD timeoutMs = 1000);
         bool Show(const WindowId& id, DWORD timeoutMs = 1000);

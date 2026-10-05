@@ -127,6 +127,13 @@ namespace IndependentDesktops
             if (slot.status != Free && WindowHandle(slot.id) == window && MatchesWindow(slot.id)) return slot.id;
         return {};
     }
+    std::size_t RecoverySession::RegisteredCount() const
+    {
+        std::size_t count{};
+        if (m_state->view.data)
+            for (const auto& slot : m_state->view.data->slots) if (slot.status != Free) ++count;
+        return count;
+    }
     std::optional<WindowId> RecoverySession::Register(HWND window)
     {
         if (!Healthy()) return {};

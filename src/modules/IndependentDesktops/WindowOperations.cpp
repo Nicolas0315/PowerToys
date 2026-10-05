@@ -29,6 +29,18 @@ namespace IndependentDesktops
             if (!MatchesWindow(id)) return false;
             if ((IsWindowVisible(reinterpret_cast<HWND>(static_cast<ULONG_PTR>(id.handle))) != FALSE) == visible) return true;
             if (GetTickCount64() >= deadline) break;
+            // ShowWindowAsync queues work even for a window on this thread. Only
+            // dispatch that window's messages; never re-enter the manager's queue.
+            if (id.thread == GetCurrentThreadId())
+            {
+                MSG message{};
+                const HWND window = reinterpret_cast<HWND>(static_cast<ULONG_PTR>(id.handle));
+                while (PeekMessageW(&message, window, 0, 0, PM_REMOVE))
+                {
+                    TranslateMessage(&message);
+                    DispatchMessageW(&message);
+                }
+            }
             Sleep(10);
         } while (true);
         return false;
