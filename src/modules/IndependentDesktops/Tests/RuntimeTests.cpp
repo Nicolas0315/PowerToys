@@ -49,7 +49,7 @@ int wmain(int argc, wchar_t** argv)
         if (!ParseHandle(argv[2], value)) return 2;
         RecoverySession session;
         if (!session.Start(Executable())) return 3;
-        const auto id = session.Register(reinterpret_cast<HWND>(value));
+        const auto id = session.Register(static_cast<HWND>(value));
         if (!id || !session.Hide(*id)) return 4;
         // Deliberately bypass destructors; the watchdog must restore the foreign window.
         TerminateProcess(GetCurrentProcess(), 88);
