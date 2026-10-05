@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <map>
 #include <optional>
+#include <set>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -84,6 +85,26 @@ namespace IndependentDesktops
             const unsigned target = selection.value_or(Selected(desktop, monitor));
             result.rejection = Rejection::None;
             result.assignments = assignments;
+            std::set<WindowId> affectedGroups;
+            for (const auto& [id, entry] : m_windows)
+            {
+                if (entry.window.desktop != desktop || entry.assignedMonitor != monitor)
+                    continue;
+                const auto assigned = assignments.find(id);
+                const unsigned workspace = assigned == assignments.end() ? entry.workspace : assigned->second;
+                if ((selection && *selection != Selected(desktop, monitor)) || assigned != assignments.end() ||
+                    (entry.window.visible && workspace != target) || (entry.hiddenByUs && workspace == target))
+                    affectedGroups.insert(entry.window.root);
+            }
+            for (const auto& [id, entry] : m_windows)
+            {
+                if (entry.window.desktop == desktop && affectedGroups.contains(entry.window.root) && entry.window.monitor != monitor)
+                {
+                    result.rejection = Rejection::CrossMonitorGroup;
+                    result.assignments.clear();
+                    return result;
+                }
+            }
             for (const auto& [id, entry] : m_windows)
             {
                 if (entry.window.desktop != desktop || entry.assignedMonitor != monitor)
@@ -168,6 +189,19 @@ namespace IndependentDesktops
                             found->second.workspace = owner->second.workspace;
                         }
                     }
+                }
+            }
+            // Hidden owned members must follow the root's membership too; being
+            // app-hidden does not make a cross-monitor dialog safe to ignore.
+            for (auto& [id, member] : m_windows)
+            {
+                if (id == member.window.root)
+                    continue;
+                const auto owner = m_windows.find(member.window.root);
+                if (owner != m_windows.end() && owner->second.window.desktop == member.window.desktop)
+                {
+                    member.assignedMonitor = owner->second.assignedMonitor;
+                    member.workspace = owner->second.workspace;
                 }
             }
         }

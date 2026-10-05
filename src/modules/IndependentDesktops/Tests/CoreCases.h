@@ -208,5 +208,17 @@ inline std::vector<std::pair<std::string, std::function<void()>>> CoreCases()
             Check(model.Selected(L"native-1", L"left") == selected[0] && model.Selected(L"native-1", L"right") == selected[1], "both selections match independent reference");
         }
     });
+    cases.emplace_back("app_hidden_cross_monitor_dialog_still_blocks_group_switch", [] {
+        WorkspaceModel model;
+        auto root = Window(1, L"right"), dialog = Window(2, L"left");
+        dialog.root = root.id;
+        model.Observe(L"native-1", { root, dialog });
+        dialog.visible = false; // The app hid its own dialog, not the utility.
+        model.Observe(L"native-1", { root, dialog });
+        const auto plan = model.Step(L"native-1", L"right", 1);
+        Check(!plan.valid() && plan.rejection == Rejection::CrossMonitorGroup, "entire owned group must stay on one monitor");
+        Check(plan.hide.empty() && plan.show.empty(), "refused switch cannot hide the root");
+        Check(!model.Move(root.id, 1).valid(), "moving that group must also be refused");
+    });
     return cases;
 }

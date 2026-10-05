@@ -45,12 +45,24 @@ namespace
                 if (auto result = DesktopKey(id); !result.empty())
                     return result;
         }
-        // Public API fallback for Explorer configurations without this registry value.
+        // A foreground pinned window may report the generic AllDesktops view.
+        // Only use this fallback when its ID belongs to Explorer's real desktop list.
         const HWND foreground = GetForegroundWindow();
         BOOL current{};
         GUID id{};
         if (foreground && SUCCEEDED(manager->IsWindowOnCurrentVirtualDesktop(foreground, &current)) && current && SUCCEEDED(manager->GetWindowDesktopId(foreground, &id)))
-            return DesktopKey(id);
+        {
+            for (const auto& path : paths)
+            {
+                std::array<GUID, 1024> desktops{};
+                DWORD bytes = sizeof(desktops);
+                if (RegGetValueW(HKEY_CURRENT_USER, path.c_str(), L"VirtualDesktopIDs", RRF_RT_REG_BINARY, nullptr, desktops.data(), &bytes) != ERROR_SUCCESS || bytes % sizeof(GUID) != 0)
+                    continue;
+                for (std::size_t i = 0; i < bytes / sizeof(GUID); ++i)
+                    if (IsEqualGUID(id, desktops[i]))
+                        return DesktopKey(id);
+            }
+        }
         return {};
     }
     bool ShellWindow(HWND window)
@@ -131,7 +143,7 @@ namespace
                 return {};
             GUID desktop{};
             if (FAILED(m_desktops->GetWindowDesktopId(window, &desktop)) || DesktopKey(desktop) != m_desktop)
-                return {}; // Includes pinned/all-desktop windows.
+                return {}; // Excludes the generic AllDesktops view and other reported desktops.
             auto registered = m_recovery.Register(window);
             if (!registered && m_recovery.RegisteredCount() >= MaxTrackedWindows)
                 m_failed = true;

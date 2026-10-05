@@ -28,6 +28,10 @@ namespace IndependentDesktopsTests
         }
 
     public:
+        TEST_METHOD (app_hidden_cross_monitor_dialog_still_blocks_group_switch)
+        {
+            Run("app_hidden_cross_monitor_dialog_still_blocks_group_switch");
+        }
         TEST_METHOD (window_marker_generation_prevents_same_process_handle_reuse)
         {
             Run("window_marker_generation_prevents_same_process_handle_reuse");
