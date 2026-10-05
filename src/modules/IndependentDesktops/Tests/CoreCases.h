@@ -11,7 +11,8 @@
 using namespace IndependentDesktops;
 static void Check(bool condition, const char* message)
 {
-    if (!condition) throw std::runtime_error(message);
+    if (!condition)
+        throw std::runtime_error(message);
 }
 static WindowSnapshot Window(std::uint64_t id, const wchar_t* monitor, const wchar_t* desktop = L"native-1", bool visible = true)
 {
@@ -20,7 +21,9 @@ static WindowSnapshot Window(std::uint64_t id, const wchar_t* monitor, const wch
 }
 static bool Has(const std::vector<WindowId>& values, const WindowId& id)
 {
-    for (const auto& value : values) if (value == id) return true;
+    for (const auto& value : values)
+        if (value == id)
+            return true;
     return false;
 }
 inline std::vector<std::pair<std::string, std::function<void()>>> CoreCases()
@@ -122,7 +125,8 @@ inline std::vector<std::pair<std::string, std::function<void()>>> CoreCases()
         auto old = Window(1, L"left"), replacement = old;
         model.Observe(L"native-1", { old });
         Check(model.Commit(model.Step(L"native-1", L"left", 1)), "switch");
-        replacement.id.created = 99; replacement.root = replacement.id;
+        replacement.id.created = 99;
+        replacement.root = replacement.id;
         model.Observe(L"native-1", { replacement });
         Check(!model.Assignment(old.id), "old identity removed");
         Check(model.Assignment(replacement.id) == 1, "replacement belongs to current workspace");
@@ -154,7 +158,8 @@ inline std::vector<std::pair<std::string, std::function<void()>>> CoreCases()
     cases.emplace_back("capacity_exhaustion_refuses_visibility_changes", [] {
         WorkspaceModel model;
         std::vector<WindowSnapshot> windows;
-        for (std::uint64_t i = 1; i <= MaxTrackedWindows + 1; ++i) windows.push_back(Window(i, L"left"));
+        for (std::uint64_t i = 1; i <= MaxTrackedWindows + 1; ++i)
+            windows.push_back(Window(i, L"left"));
         model.Observe(L"native-1", windows);
         auto change = model.Step(L"native-1", L"left", 1);
         Check(!change.valid() && change.rejection == Rejection::Capacity, "no partially managed desktop");
@@ -162,10 +167,12 @@ inline std::vector<std::pair<std::string, std::function<void()>>> CoreCases()
     cases.emplace_back("window_marker_generation_prevents_same_process_handle_reuse", [] {
         WorkspaceModel model;
         auto old = Window(1, L"left"), replacement = old;
-        old.id.incarnation = 1; old.root = old.id;
+        old.id.incarnation = 1;
+        old.root = old.id;
         model.Observe(L"native-1", { old });
         Check(model.Commit(model.Step(L"native-1", L"left", 1)), "switch old window");
-        replacement.id.incarnation = 2; replacement.root = replacement.id;
+        replacement.id.incarnation = 2;
+        replacement.root = replacement.id;
         model.Observe(L"native-1", { replacement });
         Check(!model.Assignment(old.id), "same PID, thread and HWND with new marker is distinct");
         Check(model.Assignment(replacement.id) == 1, "replacement joins selected workspace");
@@ -173,7 +180,8 @@ inline std::vector<std::pair<std::string, std::function<void()>>> CoreCases()
     cases.emplace_back("fixed_seed_10000_transitions_preserve_independent_monitors", [] {
         WorkspaceModel model;
         std::vector<WindowSnapshot> windows;
-        for (std::uint64_t i = 1; i <= 20; ++i) windows.push_back(Window(i, i <= 10 ? L"left" : L"right"));
+        for (std::uint64_t i = 1; i <= 20; ++i)
+            windows.push_back(Window(i, i <= 10 ? L"left" : L"right"));
         std::mt19937 random(49420);
         unsigned selected[2]{};
         unsigned assigned[20]{};

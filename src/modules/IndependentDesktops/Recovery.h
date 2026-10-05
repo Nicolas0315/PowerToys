@@ -10,6 +10,7 @@ namespace IndependentDesktops
     {
         struct State;
         std::unique_ptr<State> m_state;
+
     public:
         RecoverySession();
         ~RecoverySession();

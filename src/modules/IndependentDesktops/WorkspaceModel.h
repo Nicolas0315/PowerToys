@@ -33,7 +33,14 @@ namespace IndependentDesktops
         bool visible{};
         bool manageable{};
     };
-    enum class Rejection { None, NoMonitor, CrossMonitorGroup, Capacity, Stale };
+    enum class Rejection
+    {
+        None,
+        NoMonitor,
+        CrossMonitorGroup,
+        Capacity,
+        Stale
+    };
     struct Transition
     {
         Rejection rejection{ Rejection::NoMonitor };
@@ -60,23 +67,27 @@ namespace IndependentDesktops
         std::uint64_t m_version{};
         bool m_saturated{};
 
-        Transition Plan(const std::wstring& desktop, const std::wstring& monitor,
-                        std::optional<unsigned> selection,
-                        const std::map<WindowId, unsigned>& assignments = {}) const
+        Transition Plan(const std::wstring& desktop, const std::wstring& monitor, std::optional<unsigned> selection, const std::map<WindowId, unsigned>& assignments = {}) const
         {
             Transition result;
             result.version = m_version;
             result.desktop = desktop;
             result.monitor = monitor;
             result.selection = selection;
-            if (desktop.empty() || monitor.empty() || (selection && *selection >= WorkspaceCount)) return result;
-            if (m_saturated) { result.rejection = Rejection::Capacity; return result; }
+            if (desktop.empty() || monitor.empty() || (selection && *selection >= WorkspaceCount))
+                return result;
+            if (m_saturated)
+            {
+                result.rejection = Rejection::Capacity;
+                return result;
+            }
             const unsigned target = selection.value_or(Selected(desktop, monitor));
             result.rejection = Rejection::None;
             result.assignments = assignments;
             for (const auto& [id, entry] : m_windows)
             {
-                if (entry.window.desktop != desktop || entry.assignedMonitor != monitor) continue;
+                if (entry.window.desktop != desktop || entry.assignedMonitor != monitor)
+                    continue;
                 const auto assigned = assignments.find(id);
                 const unsigned workspace = assigned == assignments.end() ? entry.workspace : assigned->second;
                 const bool hide = entry.window.visible && workspace != target;
@@ -84,11 +95,15 @@ namespace IndependentDesktops
                 if ((hide || show) && entry.window.monitor != monitor)
                 {
                     result.rejection = Rejection::CrossMonitorGroup;
-                    result.hide.clear(); result.show.clear(); result.assignments.clear();
+                    result.hide.clear();
+                    result.show.clear();
+                    result.assignments.clear();
                     return result;
                 }
-                if (hide) result.hide.push_back(id);
-                if (show) result.show.push_back(id);
+                if (hide)
+                    result.hide.push_back(id);
+                if (show)
+                    result.show.push_back(id);
             }
             return result;
         }
@@ -98,11 +113,16 @@ namespace IndependentDesktops
         {
             ++m_version;
             std::map<WindowId, WindowSnapshot> observed;
-            for (const auto& window : snapshots) observed.emplace(window.id, window);
+            for (const auto& window : snapshots)
+                observed.emplace(window.id, window);
             for (auto it = m_windows.begin(); it != m_windows.end();)
             {
                 const auto found = observed.find(it->first);
-                if (found == observed.end()) { it = m_windows.erase(it); continue; }
+                if (found == observed.end())
+                {
+                    it = m_windows.erase(it);
+                    continue;
+                }
                 it->second.window = found->second;
                 ++it;
             }
@@ -113,17 +133,23 @@ namespace IndependentDesktops
                 for (const auto& window : snapshots)
                 {
                     const bool root = window.id == window.root;
-                    if (root != (pass == 0) || !window.manageable || !window.visible || window.desktop != desktop) continue;
+                    if (root != (pass == 0) || !window.manageable || !window.visible || window.desktop != desktop)
+                        continue;
                     auto found = m_windows.find(window.id);
                     if (found == m_windows.end())
                     {
-                        if (m_windows.size() >= MaxTrackedWindows) { m_saturated = true; continue; }
+                        if (m_windows.size() >= MaxTrackedWindows)
+                        {
+                            m_saturated = true;
+                            continue;
+                        }
                         if (root)
                             found = m_windows.emplace(window.id, Entry{ window, window.monitor, Selected(desktop, window.monitor), false }).first;
                         else
                         {
                             const auto owner = m_windows.find(window.root);
-                            if (owner == m_windows.end() || owner->second.window.desktop != desktop) continue;
+                            if (owner == m_windows.end() || owner->second.window.desktop != desktop)
+                                continue;
                             found = m_windows.emplace(window.id, Entry{ window, owner->second.assignedMonitor, owner->second.workspace, false }).first;
                         }
                     }
@@ -161,7 +187,8 @@ namespace IndependentDesktops
         }
         Transition Step(const std::wstring& desktop, const std::wstring& monitor, int direction) const
         {
-            if (direction != -1 && direction != 1) return {};
+            if (direction != -1 && direction != 1)
+                return {};
             const unsigned current = Selected(desktop, monitor);
             const unsigned next = direction < 0 ? (current + WorkspaceCount - 1) % WorkspaceCount : (current + 1) % WorkspaceCount;
             return Select(desktop, monitor, next);
@@ -169,33 +196,44 @@ namespace IndependentDesktops
         Transition Move(const WindowId& id, int direction) const
         {
             const auto found = m_windows.find(id);
-            if (found == m_windows.end() || (direction != -1 && direction != 1)) return {};
+            if (found == m_windows.end() || (direction != -1 && direction != 1))
+                return {};
             const auto& entry = found->second;
             const unsigned current = Selected(entry.window.desktop, entry.assignedMonitor);
             const unsigned next = direction < 0 ? (current + WorkspaceCount - 1) % WorkspaceCount : (current + 1) % WorkspaceCount;
             std::map<WindowId, unsigned> assignments;
             for (const auto& [memberId, member] : m_windows)
-                if (member.window.root == entry.window.root && member.window.desktop == entry.window.desktop) assignments.emplace(memberId, next);
+                if (member.window.root == entry.window.root && member.window.desktop == entry.window.desktop)
+                    assignments.emplace(memberId, next);
             return Plan(entry.window.desktop, entry.assignedMonitor, std::nullopt, assignments);
         }
         bool Commit(const Transition& transition)
         {
-            if (!transition.valid() || transition.version != m_version) return false;
-            if (transition.selection) m_selected[{ transition.desktop, transition.monitor }] = *transition.selection;
-            for (const auto& [id, workspace] : transition.assignments) m_windows.at(id).workspace = workspace;
-            for (const auto& id : transition.hide) m_windows.at(id).hiddenByUs = true;
-            for (const auto& id : transition.show) m_windows.at(id).hiddenByUs = false;
+            if (!transition.valid() || transition.version != m_version)
+                return false;
+            if (transition.selection)
+                m_selected[{ transition.desktop, transition.monitor }] = *transition.selection;
+            for (const auto& [id, workspace] : transition.assignments)
+                m_windows.at(id).workspace = workspace;
+            for (const auto& id : transition.hide)
+                m_windows.at(id).hiddenByUs = true;
+            for (const auto& id : transition.show)
+                m_windows.at(id).hiddenByUs = false;
             ++m_version;
             return true;
         }
         void ReleaseVisibility()
         {
-            for (auto& [id, entry] : m_windows) entry.hiddenByUs = false;
+            for (auto& [id, entry] : m_windows)
+                entry.hiddenByUs = false;
             ++m_version;
         }
         void Reset()
         {
-            m_windows.clear(); m_selected.clear(); m_saturated = false; ++m_version;
+            m_windows.clear();
+            m_selected.clear();
+            m_saturated = false;
+            ++m_version;
         }
         std::size_t size() const { return m_windows.size(); }
     };
