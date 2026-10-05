@@ -38,6 +38,7 @@ enum class ESettingsWindowNames
     ZoomIt,
     PowerDisplay,
     GrabAndMove,
+    IndependentDesktops,
 };
 
 std::string ESettingsWindowNames_to_string(ESettingsWindowNames value);

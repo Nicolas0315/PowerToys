@@ -32,3 +32,33 @@ jobs:
           path: |
             independent-desktops-build/results.xml
             independent-desktops-build/Testing/Temporary/LastTest.log
+  repository-integration:
+    needs: standalone
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Restore and build Runner and Settings with repository scripts
+        run: tools/build/build-essentials.ps1 -Platform x64 -Configuration Release
+      - name: Build module, interface and native tests with repository scripts
+        run: |
+          tools/build/build.ps1 -Platform x64 -Configuration Release -Path src/modules/IndependentDesktops
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          tools/build/build.ps1 -Platform x64 -Configuration Release -Path src/modules/IndependentDesktops/ModuleInterface
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          tools/build/build.ps1 -Platform x64 -Configuration Release -Path src/modules/IndependentDesktops/Tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run the native test project after a successful build
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe" -latest -property installationPath
+          & "$vs/Common7/IDE/CommonExtensions/Microsoft/TestWindow/vstest.console.exe" "x64/Release/tests/IndependentDesktops/IndependentDesktopsUnitTests.dll" /Logger:trx
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Publish repository build and test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: independent-desktops-integration-results
+          path: |
+            **/build.release.x64.errors.log
+            **/build.release.x64.all.log
+            TestResults/*.trx

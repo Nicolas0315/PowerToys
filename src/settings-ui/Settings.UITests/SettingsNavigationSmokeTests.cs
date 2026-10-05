@@ -66,6 +66,7 @@ public sealed class SettingsNavigationSmokeTests : UITestBase
         new NavigationCase("WindowingAndLayoutsNavItem", "CropAndLockNavItem"),
         new NavigationCase("WindowingAndLayoutsNavItem", "FancyZonesNavItem"),
         new NavigationCase("WindowingAndLayoutsNavItem", "GrabAndMoveNavItem"),
+        new NavigationCase("WindowingAndLayoutsNavItem", "IndependentDesktopsNavItem"),
         new NavigationCase("WindowingAndLayoutsNavItem", "WorkspacesNavItem"),
 
         // Input / Output

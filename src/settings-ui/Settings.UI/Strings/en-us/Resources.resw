@@ -3357,6 +3357,25 @@ Right-click to remove the key combination, thereby deactivating the shortcut.</v
     <value>Window Hopper lets you cycle between windows of the currently focused application.</value>
     <comment>"Window Hopper" is the name of the utility</comment>
   </data>
+  <data name="IndependentDesktops.ModuleDescription" xml:space="preserve">
+    <value>Experimental: keep up to four separate window workspaces on each monitor. Independent Desktops does not use, create, or change Windows Task View desktops. Workspaces and monitor choices are kept only for the current session.</value>
+  </data>
+  <data name="IndependentDesktops.ModuleTitle" xml:space="preserve">
+    <value>Independent Desktops (experimental)</value>
+  </data>
+  <data name="IndependentDesktops_Activation_GroupSettings.Header" xml:space="preserve"><value>Shortcuts</value></data>
+  <data name="IndependentDesktops_EnableToggleControl_HeaderText.Header" xml:space="preserve"><value>Enable Independent Desktops</value></data>
+  <data name="IndependentDesktops_PreviousDesktopShortcut.Header" xml:space="preserve"><value>Previous workspace</value></data>
+  <data name="IndependentDesktops_PreviousDesktopShortcut.Description" xml:space="preserve"><value>Show the previous workspace on the current monitor</value></data>
+  <data name="IndependentDesktops_NextDesktopShortcut.Header" xml:space="preserve"><value>Next workspace</value></data>
+  <data name="IndependentDesktops_NextDesktopShortcut.Description" xml:space="preserve"><value>Show the next workspace on the current monitor</value></data>
+  <data name="IndependentDesktops_MovePreviousDesktopShortcut.Header" xml:space="preserve"><value>Move window to previous workspace</value></data>
+  <data name="IndependentDesktops_MovePreviousDesktopShortcut.Description" xml:space="preserve"><value>Move the focused window to the previous workspace on its monitor</value></data>
+  <data name="IndependentDesktops_MoveNextDesktopShortcut.Header" xml:space="preserve"><value>Move window to next workspace</value></data>
+  <data name="IndependentDesktops_MoveNextDesktopShortcut.Description" xml:space="preserve"><value>Move the focused window to the next workspace on its monitor</value></data>
+  <data name="IndependentDesktops_RestoreWindowsShortcut.Header" xml:space="preserve"><value>Restore all windows</value></data>
+  <data name="IndependentDesktops_RestoreWindowsShortcut.Description" xml:space="preserve"><value>Restore windows hidden by Independent Desktops in this session</value></data>
+  <data name="Shell_IndependentDesktops.Content" xml:space="preserve"><value>Independent Desktops (experimental)</value></data>
   <data name="AltWindowCycle.ModuleTitle" xml:space="preserve">
     <value>Window Hopper</value>
     <comment>"Window Hopper" is the name of the utility</comment>

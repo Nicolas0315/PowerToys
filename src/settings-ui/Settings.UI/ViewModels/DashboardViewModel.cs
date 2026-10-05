@@ -223,7 +223,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
                     IsEnabled = gpo == GpoRuleConfigured.Enabled || (gpo != GpoRuleConfigured.Disabled && ModuleHelper.GetIsModuleEnabled(generalSettingsConfig, moduleType)),
                     IsLocked = gpo == GpoRuleConfigured.Enabled || gpo == GpoRuleConfigured.Disabled,
                     Icon = ModuleHelper.GetModuleTypeFluentIconName(moduleType),
-                    IsNew = moduleType == ModuleType.AltWindowCycle,
+                    IsNew = moduleType == ModuleType.AltWindowCycle || moduleType == ModuleType.IndependentDesktops,
                     DashboardModuleItems = GetModuleItems(moduleType),
                     ClickCommand = new RelayCommand<object>(DashboardListItemClick),
                 };
@@ -486,6 +486,7 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
             return moduleType switch
             {
                 ModuleType.AdvancedPaste => GetModuleItemsAdvancedPaste(),
+                ModuleType.IndependentDesktops => GetModuleItemsIndependentDesktops(),
                 ModuleType.AlwaysOnTop => GetModuleItemsAlwaysOnTop(),
                 ModuleType.CmdPal => GetModuleItemsCmdPal(),
                 ModuleType.ColorPicker => GetModuleItemsColorPicker(),
@@ -637,6 +638,19 @@ namespace Microsoft.PowerToys.Settings.UI.ViewModels
                 new DashboardModuleShortcutItem() { Label = resourceLoader.GetString("AltWindowCycle_PreviousWindowShortcut/Header"), Shortcut = settings.Properties.PreviousWindowShortcut.GetKeysList() },
             };
             return new ObservableCollection<DashboardModuleItem>(list);
+        }
+
+        private ObservableCollection<DashboardModuleItem> GetModuleItemsIndependentDesktops()
+        {
+            var settings = SettingsRepository<IndependentDesktopsSettings>.GetInstance(SettingsUtils.Default).SettingsConfig;
+            return new ObservableCollection<DashboardModuleItem>(new List<DashboardModuleItem>
+            {
+                new DashboardModuleShortcutItem() { Label = resourceLoader.GetString("IndependentDesktops_PreviousDesktopShortcut/Header"), Shortcut = settings.Properties.PreviousDesktopShortcut.GetKeysList() },
+                new DashboardModuleShortcutItem() { Label = resourceLoader.GetString("IndependentDesktops_NextDesktopShortcut/Header"), Shortcut = settings.Properties.NextDesktopShortcut.GetKeysList() },
+                new DashboardModuleShortcutItem() { Label = resourceLoader.GetString("IndependentDesktops_MovePreviousDesktopShortcut/Header"), Shortcut = settings.Properties.MovePreviousDesktopShortcut.GetKeysList() },
+                new DashboardModuleShortcutItem() { Label = resourceLoader.GetString("IndependentDesktops_MoveNextDesktopShortcut/Header"), Shortcut = settings.Properties.MoveNextDesktopShortcut.GetKeysList() },
+                new DashboardModuleShortcutItem() { Label = resourceLoader.GetString("IndependentDesktops_RestoreWindowsShortcut/Header"), Shortcut = settings.Properties.RestoreWindowsShortcut.GetKeysList() },
+            });
         }
 
         private ObservableCollection<DashboardModuleItem> GetModuleItemsHosts()

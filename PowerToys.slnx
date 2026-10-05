@@ -1279,6 +1279,13 @@
     <Project Path="src/modules/GrabAndMove/GrabAndMove/GrabAndMove.vcxproj" Id="568c4c30-2e3c-4c2c-a691-007362073765" />
     <Project Path="src/modules/GrabAndMove/GrabAndMoveModuleInterface/GrabAndMoveModuleInterface.vcxproj" Id="2c3f7770-4e57-46b7-8dc1-7428a383d0db" />
   </Folder>
+  <Folder Name="/modules/IndependentDesktops/">
+    <Project Path="src/modules/IndependentDesktops/IndependentDesktops.vcxproj" Id="bb0a3913-d51a-4454-9bec-d4d0985db615" />
+    <Project Path="src/modules/IndependentDesktops/ModuleInterface/IndependentDesktopsModuleInterface.vcxproj" Id="d638d1b8-44df-4a9a-8f2e-94b0e2e037c9" />
+  </Folder>
+  <Folder Name="/modules/IndependentDesktops/Tests/">
+    <Project Path="src/modules/IndependentDesktops/Tests/IndependentDesktopsUnitTests.vcxproj" Id="82e5b91f-bc11-448e-abce-29508b5a23ce" />
+  </Folder>
   <Folder Name="/settings-ui/">
     <Project Path="src/settings-ui/QuickAccess.UI/PowerToys.QuickAccess.csproj">
       <Platform Solution="*|ARM64" Project="ARM64" />
@@ -1344,6 +1351,8 @@
     <BuildDependency Project="src/modules/fancyzones/FancyZonesModuleInterface/FancyZonesModuleInterface.vcxproj" />
     <BuildDependency Project="src/modules/GrabAndMove/GrabAndMove/GrabAndMove.vcxproj" />
     <BuildDependency Project="src/modules/GrabAndMove/GrabAndMoveModuleInterface/GrabAndMoveModuleInterface.vcxproj" />
+    <BuildDependency Project="src/modules/IndependentDesktops/IndependentDesktops.vcxproj" />
+    <BuildDependency Project="src/modules/IndependentDesktops/ModuleInterface/IndependentDesktopsModuleInterface.vcxproj" />
     <BuildDependency Project="src/modules/imageresizer/dll/ImageResizerExt.vcxproj" />
     <BuildDependency Project="src/modules/imageresizer/ui/ImageResizerUI.csproj" />
     <BuildDependency Project="src/modules/keyboardmanager/dll/KeyboardManager.vcxproj" />

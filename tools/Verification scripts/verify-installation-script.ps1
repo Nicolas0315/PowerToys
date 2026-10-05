@@ -335,6 +335,8 @@ function Test-CoreFiles {
         'PowerToys.AlwaysOnTop.exe',
         'PowerToys.AlwaysOnTopModuleInterface.dll',
         'PowerToys.AltWindowCycle.dll',
+        'PowerToys.IndependentDesktopsModuleInterface.dll',
+        'PowerToys.IndependentDesktops.exe',
         'PowerToys.CmdNotFoundModuleInterface.dll',
         'PowerToys.ColorPicker.dll',
         'PowerToys.CropAndLockModuleInterface.dll',

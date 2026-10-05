@@ -1,0 +1,32 @@
+<local:NavigablePage
+    x:Class="Microsoft.PowerToys.Settings.UI.Views.IndependentDesktopsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Microsoft.PowerToys.Settings.UI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:Microsoft.PowerToys.Settings.UI.Helpers"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:tkcontrols="using:CommunityToolkit.WinUI.Controls"
+    xmlns:ui="using:CommunityToolkit.WinUI"
+    AutomationProperties.LandmarkType="Main"
+    mc:Ignorable="d">
+    <local:NavigablePage.Resources />
+    <controls:SettingsPageControl x:Uid="IndependentDesktops" IsTabStop="False" ModuleImageSource="ms-appx:///Assets/Settings/Modules/Workspaces.png">
+        <controls:SettingsPageControl.ModuleContent>
+            <StackPanel ChildrenTransitions="{StaticResource SettingsCardsAnimations}" Orientation="Vertical">
+                <controls:GPOInfoControl ShowWarning="{x:Bind ViewModel.IsEnabledGpoConfigured, Mode=OneWay}">
+                    <tkcontrols:SettingsCard x:Uid="IndependentDesktops_EnableToggleControl_HeaderText" HeaderIcon="{ui:BitmapIcon Source=/Assets/Settings/Icons/Workspaces.png}">
+                        <ToggleSwitch x:Uid="ToggleSwitch" IsOn="{x:Bind ViewModel.IsEnabled, Mode=TwoWay}" />
+                    </tkcontrols:SettingsCard>
+                </controls:GPOInfoControl>
+                <controls:SettingsGroup x:Uid="IndependentDesktops_Activation_GroupSettings" IsEnabled="{x:Bind ViewModel.IsEnabled, Mode=OneWay}">
+                    <tkcontrols:SettingsCard x:Uid="IndependentDesktops_PreviousDesktopShortcut" HeaderIcon="{ui:FontIcon Glyph=&#xE72B;}"><controls:ShortcutControl HotkeySettings="{x:Bind ViewModel.PreviousDesktopShortcut, Mode=TwoWay}" /></tkcontrols:SettingsCard>
+                    <tkcontrols:SettingsCard x:Uid="IndependentDesktops_NextDesktopShortcut" HeaderIcon="{ui:FontIcon Glyph=&#xE72A;}"><controls:ShortcutControl HotkeySettings="{x:Bind ViewModel.NextDesktopShortcut, Mode=TwoWay}" /></tkcontrols:SettingsCard>
+                    <tkcontrols:SettingsCard x:Uid="IndependentDesktops_MovePreviousDesktopShortcut" HeaderIcon="{ui:FontIcon Glyph=&#xE72B;}"><controls:ShortcutControl HotkeySettings="{x:Bind ViewModel.MovePreviousDesktopShortcut, Mode=TwoWay}" /></tkcontrols:SettingsCard>
+                    <tkcontrols:SettingsCard x:Uid="IndependentDesktops_MoveNextDesktopShortcut" HeaderIcon="{ui:FontIcon Glyph=&#xE72A;}"><controls:ShortcutControl HotkeySettings="{x:Bind ViewModel.MoveNextDesktopShortcut, Mode=TwoWay}" /></tkcontrols:SettingsCard>
+                    <tkcontrols:SettingsCard x:Uid="IndependentDesktops_RestoreWindowsShortcut" HeaderIcon="{ui:FontIcon Glyph=&#xE777;}"><controls:ShortcutControl HotkeySettings="{x:Bind ViewModel.RestoreWindowsShortcut, Mode=TwoWay}" /></tkcontrols:SettingsCard>
+                </controls:SettingsGroup>
+            </StackPanel>
+        </controls:SettingsPageControl.ModuleContent>
+    </controls:SettingsPageControl>
+</local:NavigablePage>

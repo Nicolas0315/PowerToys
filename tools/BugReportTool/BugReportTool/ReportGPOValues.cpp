@@ -74,6 +74,7 @@ void ReportGPOValues(const std::filesystem::path &tmpDir)
     report << "getConfiguredPowerRenameEnabledValue: " << gpo_rule_configured_to_string(powertoys_gpo::getConfiguredPowerRenameEnabledValue()) << std::endl;
     report << "getConfiguredPowerLauncherEnabledValue: " << gpo_rule_configured_to_string(powertoys_gpo::getConfiguredPowerLauncherEnabledValue()) << std::endl;
     report << "getConfiguredWorkspacesEnabledValue: " << gpo_rule_configured_to_string(powertoys_gpo::getConfiguredWorkspacesEnabledValue()) << std::endl;
+    report << "getConfiguredIndependentDesktopsEnabledValue: " << gpo_rule_configured_to_string(powertoys_gpo::getConfiguredIndependentDesktopsEnabledValue()) << std::endl;
     report << "getConfiguredQuickAccentEnabledValue: " << gpo_rule_configured_to_string(powertoys_gpo::getConfiguredQuickAccentEnabledValue()) << std::endl;
     report << "getConfiguredScreenRulerEnabledValue: " << gpo_rule_configured_to_string(powertoys_gpo::getConfiguredScreenRulerEnabledValue()) << std::endl;
     report << "getConfiguredShortcutGuideEnabledValue: " << gpo_rule_configured_to_string(powertoys_gpo::getConfiguredShortcutGuideEnabledValue()) << std::endl;

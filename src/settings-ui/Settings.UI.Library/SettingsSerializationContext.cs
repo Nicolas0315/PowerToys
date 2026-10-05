@@ -44,6 +44,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library
     [JsonSerializable(typeof(GeneralSettings))]
     [JsonSerializable(typeof(OutGoingGeneralSettings))]
     [JsonSerializable(typeof(AdvancedPasteSettings))]
+    [JsonSerializable(typeof(IndependentDesktopsSettings))]
     [JsonSerializable(typeof(AltWindowCycleSettings))]
     [JsonSerializable(typeof(AlwaysOnTopSettings))]
     [JsonSerializable(typeof(AutoHideCursorSettings))]
@@ -82,6 +83,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library
 
     // Properties Classes
     [JsonSerializable(typeof(AdvancedPasteProperties))]
+    [JsonSerializable(typeof(IndependentDesktopsProperties))]
     [JsonSerializable(typeof(AlwaysOnTopProperties))]
     [JsonSerializable(typeof(AutoHideCursorProperties))]
     [JsonSerializable(typeof(AwakeProperties))]

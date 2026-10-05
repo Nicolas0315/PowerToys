@@ -17,6 +17,7 @@ namespace Microsoft.PowerToys.Settings.UI.Helpers
             switch (moduleType)
             {
                 case ModuleType.AdvancedPaste: return GPOWrapper.GetConfiguredAdvancedPasteEnabledValue();
+                case ModuleType.IndependentDesktops: return GPOWrapper.GetConfiguredIndependentDesktopsEnabledValue();
                 case ModuleType.AlwaysOnTop: return GPOWrapper.GetConfiguredAlwaysOnTopEnabledValue();
                 case ModuleType.AutoHideCursor: return GPOWrapper.GetConfiguredAutoHideCursorEnabledValue();
                 case ModuleType.Awake: return GPOWrapper.GetConfiguredAwakeEnabledValue();
@@ -59,6 +60,7 @@ namespace Microsoft.PowerToys.Settings.UI.Helpers
             return moduleType switch
             {
                 ModuleType.AdvancedPaste => typeof(AdvancedPastePage),
+                ModuleType.IndependentDesktops => typeof(IndependentDesktopsPage),
                 ModuleType.AlwaysOnTop => typeof(AlwaysOnTopPage),
                 ModuleType.AutoHideCursor => typeof(MouseUtilsPage),
                 ModuleType.Awake => typeof(AwakePage),

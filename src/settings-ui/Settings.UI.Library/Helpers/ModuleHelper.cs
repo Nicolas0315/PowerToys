@@ -31,6 +31,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library.Helpers
             return moduleType switch
             {
                 ModuleType.AdvancedPaste => "ms-appx:///Assets/Settings/Icons/AdvancedPaste.png",
+                ModuleType.IndependentDesktops => "ms-appx:///Assets/Settings/Icons/Workspaces.png",
                 ModuleType.AltWindowCycle => "ms-appx:///Assets/Settings/Icons/WindowHopper.png",
                 ModuleType.AutoHideCursor => "ms-appx:///Assets/Settings/Icons/MouseUtils.png",
                 ModuleType.Workspaces => "ms-appx:///Assets/Settings/Icons/Workspaces.png",
@@ -49,6 +50,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library.Helpers
             return moduleType switch
             {
                 ModuleType.AdvancedPaste => generalSettingsConfig.Enabled.AdvancedPaste,
+                ModuleType.IndependentDesktops => generalSettingsConfig.Enabled.IndependentDesktops,
                 ModuleType.AlwaysOnTop => generalSettingsConfig.Enabled.AlwaysOnTop,
                 ModuleType.AutoHideCursor => generalSettingsConfig.Enabled.AutoHideCursor,
                 ModuleType.Awake => generalSettingsConfig.Enabled.Awake,
@@ -92,6 +94,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library.Helpers
             switch (moduleType)
             {
                 case ModuleType.AdvancedPaste: generalSettingsConfig.Enabled.AdvancedPaste = isEnabled; break;
+                case ModuleType.IndependentDesktops: generalSettingsConfig.Enabled.IndependentDesktops = isEnabled; break;
                 case ModuleType.AlwaysOnTop: generalSettingsConfig.Enabled.AlwaysOnTop = isEnabled; break;
                 case ModuleType.AutoHideCursor: generalSettingsConfig.Enabled.AutoHideCursor = isEnabled; break;
                 case ModuleType.Awake: generalSettingsConfig.Enabled.Awake = isEnabled; break;
@@ -138,6 +141,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library.Helpers
             return moduleType switch
             {
                 ModuleType.AdvancedPaste => AdvancedPasteSettings.ModuleName,
+                ModuleType.IndependentDesktops => IndependentDesktopsSettings.ModuleName,
                 ModuleType.AlwaysOnTop => AlwaysOnTopSettings.ModuleName,
                 ModuleType.AutoHideCursor => AutoHideCursorSettings.ModuleName,
                 ModuleType.Awake => AwakeSettings.ModuleName,

@@ -288,6 +288,16 @@
                             AutomationProperties.AutomationId="GrabAndMoveNavItem"
                             Icon="{ui:BitmapIcon Source=/Assets/Settings/Icons/GrabAndMove.png}" />
                         <NavigationViewItem
+                            x:Name="IndependentDesktopsNavigationItem"
+                            x:Uid="Shell_IndependentDesktops"
+                            helpers:NavHelper.NavigateTo="views:IndependentDesktopsPage"
+                            AutomationProperties.AutomationId="IndependentDesktopsNavItem"
+                            Icon="{ui:BitmapIcon Source=/Assets/Settings/Icons/Workspaces.png}">
+                            <NavigationViewItem.InfoBadge>
+                                <InfoBadge Style="{StaticResource NewInfoBadge}" />
+                            </NavigationViewItem.InfoBadge>
+                        </NavigationViewItem>
+                        <NavigationViewItem
                             x:Name="AltWindowCycleNavigationItem"
                             x:Uid="Shell_AltWindowCycle"
                             helpers:NavHelper.NavigateTo="views:AltWindowCyclePage"

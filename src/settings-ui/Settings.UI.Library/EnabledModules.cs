@@ -220,6 +220,22 @@ namespace Microsoft.PowerToys.Settings.UI.Library
 
         private bool altWindowCycle; // defaulting to off
 
+        private bool independentDesktops; // experimental, defaulting to off
+
+        [JsonPropertyName("IndependentDesktops")]
+        public bool IndependentDesktops
+        {
+            get => independentDesktops;
+            set
+            {
+                if (independentDesktops != value)
+                {
+                    LogTelemetryEvent(value);
+                    independentDesktops = value;
+                }
+            }
+        }
+
         [JsonPropertyName("AltWindowCycle")]
         public bool AltWindowCycle
         {

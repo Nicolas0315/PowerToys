@@ -34,6 +34,8 @@
             "PowerToys.AlwaysOnTop.exe",
             "PowerToys.AlwaysOnTopModuleInterface.dll",
             "PowerToys.AltWindowCycle.dll",
+            "PowerToys.IndependentDesktops.exe",
+            "PowerToys.IndependentDesktopsModuleInterface.dll",
 
             "PowerToys.CmdNotFoundModuleInterface.dll",
 

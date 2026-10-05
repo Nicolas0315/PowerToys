@@ -41,5 +41,6 @@ namespace ManagedCommon
         GrabAndMove,
         ZoomIt,
         GeneralSettings,
+        IndependentDesktops,
     }
 }

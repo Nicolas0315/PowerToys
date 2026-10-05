@@ -76,5 +76,10 @@ namespace PowerToys.GPOWrapperProjection
         {
             return (GpoRuleConfigured)PowerToys.GPOWrapper.GPOWrapper.GetConfiguredGrabAndMoveEnabledValue();
         }
+
+        public static GpoRuleConfigured GetConfiguredIndependentDesktopsEnabledValue()
+        {
+            return (GpoRuleConfigured)PowerToys.GPOWrapper.GPOWrapper.GetConfiguredIndependentDesktopsEnabledValue();
+        }
     }
 }
