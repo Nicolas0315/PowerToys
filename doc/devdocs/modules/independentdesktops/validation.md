@@ -152,9 +152,14 @@ attempts are retained and linked. ARM64 execution is not covered by an x64 run.
   `std::exception`. The module's settings boundaries now catch these failures.
   A native integration regression loads the built module DLL without enabling it
   and sends 11 published malformed JSON/type/range/modifier inputs, preserving
-  a prior valid shortcut after each rejection. Parsing commits shortcuts only
+  the read-only baseline of all five shortcuts after each rejection. Parsing commits shortcuts only
   after validating the whole input; rejected input is not saved. The 19 shared
   model cases plus this DLL-boundary case make 20 native adapter tests.
+
+- Review caught a test fixture that would use the production saver to establish a
+  custom shortcut and overwrite a local tester's settings. The fixture now captures
+  the current hotkeys without saving anything and asserts every field is unchanged
+  after each rejected input. This avoids a crash-sensitive save/restore workaround.
 
 ## Required physical/interactive acceptance
 
