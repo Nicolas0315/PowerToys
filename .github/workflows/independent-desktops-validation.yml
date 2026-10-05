@@ -1,0 +1,34 @@
+name: Independent Desktops validation
+on:
+  push:
+    branches: [feature/independent-desktops-per-monitor]
+    paths:
+      - 'src/modules/IndependentDesktops/**'
+      - '.github/workflows/independent-desktops-validation.yml'
+  pull_request:
+    paths:
+      - 'src/modules/IndependentDesktops/**'
+      - '.github/workflows/independent-desktops-validation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  standalone:
+    runs-on: windows-2025
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Configure supplemental Windows tests
+        run: cmake -S src/modules/IndependentDesktops -B independent-desktops-build -A x64
+      - name: Build before running tests
+        run: cmake --build independent-desktops-build --config Release
+      - name: Test and emit machine-readable results
+        run: ctest --test-dir independent-desktops-build -C Release --output-on-failure --output-junit results.xml
+      - name: Upload evidence including failures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: independent-desktops-windows-results
+          path: |
+            independent-desktops-build/results.xml
+            independent-desktops-build/Testing/Temporary/LastTest.log
