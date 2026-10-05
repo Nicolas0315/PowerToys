@@ -56,7 +56,8 @@ ctest --test-dir independent-desktops-build -C Release --output-on-failure --out
 This builds the runtime executable as well as the tests. The fixture tests run
 against windows they create; they do not certify the application's complete
 multi-monitor/Task View interaction. Do not run orphan-recovery tests alongside
-an active Independent Desktops manager.
+an active Independent Desktops manager. Native DLL settings tests also require
+the module disabled in an isolated test session, since lifecycle events are shared.
 
 Repository build and native test path:
 
@@ -150,7 +151,9 @@ attempts are retained and linked. ARM64 execution is not covered by an x64 run.
 - SettingsAPI can throw `winrt::hresult_error`, which is not caught by
   `std::exception`. The module's settings boundaries now catch these failures.
   A native integration regression loads the built module DLL without enabling it
-  and sends 11 published malformed JSON/type/range/modifier inputs. The 19 shared
+  and sends 11 published malformed JSON/type/range/modifier inputs, preserving
+  a prior valid shortcut after each rejection. Parsing commits shortcuts only
+  after validating the whole input; rejected input is not saved. The 19 shared
   model cases plus this DLL-boundary case make 20 native adapter tests.
 
 ## Required physical/interactive acceptance

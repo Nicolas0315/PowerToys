@@ -228,20 +228,25 @@ private:
 
     void parse_settings(PowerToysSettings::PowerToyValues& settings)
     {
-        reset_hotkeys_to_defaults();
-        const auto root = settings.get_raw_json();
-        if (!root.HasKey(PropertiesKey))
-        {
-            return;
-        }
-        const auto properties = root.GetNamedObject(PropertiesKey);
+        std::array<Hotkey, HotkeyCount> candidates{};
         for (size_t i = 0; i < HotkeyCount; ++i)
         {
-            if (properties.HasKey(IndependentDesktops::ShortcutKeys[i]))
+            candidates[i] = DefaultHotkey(static_cast<IndependentDesktops::Command>(i));
+        }
+        const auto root = settings.get_raw_json();
+        if (root.HasKey(PropertiesKey))
+        {
+            const auto properties = root.GetNamedObject(PropertiesKey);
+            for (size_t i = 0; i < HotkeyCount; ++i)
             {
-                ParseHotkey(properties, IndependentDesktops::ShortcutKeys[i], m_hotkeys[i]);
+                if (properties.HasKey(IndependentDesktops::ShortcutKeys[i]) && !ParseHotkey(properties, IndependentDesktops::ShortcutKeys[i], candidates[i]))
+                {
+                    throw winrt::hresult_invalid_argument();
+                }
             }
         }
+        // Invalid settings cannot partially change live shortcuts or be saved.
+        m_hotkeys = candidates;
     }
 
     bool events_ready() const

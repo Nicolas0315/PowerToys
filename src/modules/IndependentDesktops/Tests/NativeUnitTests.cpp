@@ -65,6 +65,7 @@ namespace IndependentDesktopsTests
             const auto destroy = [](PowertoyModuleIface* module) { if (module) module->destroy(); };
             std::unique_ptr<PowertoyModuleIface, decltype(destroy)> module(factory(), destroy);
             Assert::IsTrue(module != nullptr && !module->is_enabled(), L"Synthetic settings test never enables desktop management");
+            module->set_config(LR"({"name":"IndependentDesktops","properties":{"previous_desktop":{"win":true,"ctrl":true,"alt":true,"shift":false,"code":65}}})");
             const wchar_t* inputs[] = {
                 L"{",
                 L"null",
@@ -90,8 +91,9 @@ namespace IndependentDesktopsTests
                 }
                 PowertoyModuleIface::Hotkey hotkeys[5]{};
                 Assert::AreEqual(std::size_t{ 5 }, module->get_hotkeys(hotkeys, 5));
+                Assert::AreEqual(65, static_cast<int>(hotkeys[0].key), L"Rejected input preserves the prior valid shortcut");
                 for (const auto& hotkey : hotkeys)
-                    Assert::IsTrue(hotkey.key != 0 && (hotkey.win || hotkey.ctrl || hotkey.alt || hotkey.shift), L"Invalid hotkeys fall back to safe defaults");
+                    Assert::IsTrue(hotkey.key != 0 && (hotkey.win || hotkey.ctrl || hotkey.alt || hotkey.shift), L"Rejected input preserves valid hotkeys");
                 Assert::IsFalse(module->is_enabled(), L"Settings parsing cannot start desktop management");
             }
         }
