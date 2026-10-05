@@ -3,6 +3,11 @@
 #include "CppUnitTest.h"
 #include "CoreCases.h"
 #include <cstring>
+#include <filesystem>
+#include <memory>
+#include <windows.h>
+#include <roapi.h>
+#include <modules/interface/powertoy_module_interface.h>
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 namespace IndependentDesktopsTests
 {
@@ -28,6 +33,68 @@ namespace IndependentDesktopsTests
         }
 
     public:
+        TEST_METHOD (malformed_settings_do_not_escape_the_module_boundary)
+        {
+            struct Apartment
+            {
+                HRESULT result = RoInitialize(RO_INIT_MULTITHREADED);
+                ~Apartment()
+                {
+                    if (SUCCEEDED(result))
+                        RoUninitialize();
+                }
+            } apartment;
+            Assert::IsTrue(SUCCEEDED(apartment.result) || apartment.result == RPC_E_CHANGED_MODE, L"WinRT apartment initialized");
+            const auto testModule = GetModuleHandleW(L"IndependentDesktopsUnitTests.dll");
+            wchar_t location[32768]{};
+            Assert::IsTrue(testModule != nullptr && GetModuleFileNameW(testModule, location, 32768) != 0, L"Locate built test module");
+            const auto executableDirectory = std::filesystem::path(location).parent_path().parent_path().parent_path();
+            struct Library
+            {
+                HMODULE module{};
+                ~Library()
+                {
+                    if (module)
+                        FreeLibrary(module);
+                }
+            } library{ LoadLibraryExW((executableDirectory / L"PowerToys.IndependentDesktopsModuleInterface.dll").c_str(), nullptr, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS) };
+            Assert::IsTrue(library.module != nullptr, L"Load the repository-built module DLL");
+            using Factory = PowertoyModuleIface*(__cdecl*)();
+            const auto factory = reinterpret_cast<Factory>(GetProcAddress(library.module, "powertoy_create"));
+            Assert::IsTrue(factory != nullptr, L"Resolve module factory");
+            const auto destroy = [](PowertoyModuleIface* module) { if (module) module->destroy(); };
+            std::unique_ptr<PowertoyModuleIface, decltype(destroy)> module(factory(), destroy);
+            Assert::IsTrue(module != nullptr && !module->is_enabled(), L"Synthetic settings test never enables desktop management");
+            const wchar_t* inputs[] = {
+                L"{",
+                L"null",
+                L"[]",
+                L"{}",
+                LR"({"name":"IndependentDesktops","properties":null})",
+                LR"({"name":"IndependentDesktops","properties":[]})",
+                LR"({"name":"IndependentDesktops","properties":{"previous_desktop":false}})",
+                LR"({"name":"IndependentDesktops","properties":{"previous_desktop":{"win":true,"ctrl":true,"alt":true,"shift":false,"code":256}}})",
+                LR"({"name":"IndependentDesktops","properties":{"previous_desktop":{"win":true,"ctrl":true,"alt":true,"shift":false,"code":37.5}}})",
+                LR"({"name":"IndependentDesktops","properties":{"previous_desktop":{"win":false,"ctrl":false,"alt":false,"shift":false,"code":37}}})",
+                LR"({"name":"IndependentDesktops","properties":{"previous_desktop":{"win":"true","ctrl":true,"alt":true,"shift":false,"code":37}}})"
+            };
+            for (const auto* input : inputs)
+            {
+                try
+                {
+                    module->set_config(input);
+                }
+                catch (...)
+                {
+                    Assert::Fail(L"Invalid settings escaped the module boundary");
+                }
+                PowertoyModuleIface::Hotkey hotkeys[5]{};
+                Assert::AreEqual(std::size_t{ 5 }, module->get_hotkeys(hotkeys, 5));
+                for (const auto& hotkey : hotkeys)
+                    Assert::IsTrue(hotkey.key != 0 && (hotkey.win || hotkey.ctrl || hotkey.alt || hotkey.shift), L"Invalid hotkeys fall back to safe defaults");
+                Assert::IsFalse(module->is_enabled(), L"Settings parsing cannot start desktop management");
+            }
+        }
         TEST_METHOD (foreground_cross_monitor_dialog_cannot_select_unrelated_monitor)
         {
             Run("foreground_cross_monitor_dialog_cannot_select_unrelated_monitor");

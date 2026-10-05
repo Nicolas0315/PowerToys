@@ -147,6 +147,12 @@ attempts are retained and linked. ARM64 execution is not covered by an x64 run.
   limits the intended input corpus to the five checked-in synthetic seed files;
   that earlier run is not counted as the intended corpus validation.
 
+- SettingsAPI can throw `winrt::hresult_error`, which is not caught by
+  `std::exception`. The module's settings boundaries now catch these failures.
+  A native integration regression loads the built module DLL without enabling it
+  and sends 11 published malformed JSON/type/range/modifier inputs. The 19 shared
+  model cases plus this DLL-boundary case make 20 native adapter tests.
+
 ## Required physical/interactive acceptance
 
 Every row below remains **unexecuted** until recorded with the tested commit,

@@ -134,7 +134,7 @@ public:
             parse_settings(values);
             values.save_to_settings_file();
         }
-        catch (const std::exception&)
+        catch (...)
         {
             Logger::error("Invalid Independent Desktops settings");
         }
@@ -212,7 +212,7 @@ private:
             auto values = PowerToysSettings::PowerToyValues::load_from_settings_file(get_key());
             parse_settings(values);
         }
-        catch (const std::exception&)
+        catch (...)
         {
             Logger::info("Using default Independent Desktops shortcuts");
         }
