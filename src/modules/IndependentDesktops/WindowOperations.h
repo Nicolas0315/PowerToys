@@ -14,6 +14,20 @@ namespace IndependentDesktops
     bool MatchesWindow(const WindowId& id, bool requireMarker = true);
     bool WaitForVisibility(const WindowId& id, bool visible, DWORD timeoutMs = 1000);
     std::wstring MonitorName(HMONITOR monitor);
+    // A hidden top-level window lets the installer request graceful restoration.
+    // The recovery process owns no such window and must never be forcibly terminated.
+    class ShutdownWindow
+    {
+        HWND m_window{};
+
+    public:
+        explicit ShutdownWindow(HANDLE stopEvent);
+        ~ShutdownWindow();
+        ShutdownWindow(const ShutdownWindow&) = delete;
+        ShutdownWindow& operator=(const ShutdownWindow&) = delete;
+        HWND get() const { return m_window; }
+        explicit operator bool() const { return m_window != nullptr; }
+    };
     class UniqueHandle
     {
         HANDLE m_handle{};

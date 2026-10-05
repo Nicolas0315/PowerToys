@@ -31,7 +31,9 @@ reused handles, dragged windows, wraparound, reset and capacity refusal.
 
 `RuntimeTests.cpp` exercises real Win32 identities, guardian readiness, hide/show
 acknowledgement, exclusion of originally hidden windows, marker mismatch, minimized
-state, guardian death, foreign-process crash restoration and double-failure recovery.
+state, guardian death, foreign-process crash restoration, double-failure recovery
+and the invisible installer's close endpoint. There are 18 model cases and 10
+runtime cases after these additions; passing evidence must identify the commit.
 
 ## Reproduction commands
 
@@ -69,7 +71,13 @@ vstest.console.exe x64/Release/tests/IndependentDesktops/IndependentDesktopsUnit
 
 Settings model tests live in `Settings.UI.UnitTests/ModelsTests/IndependentDesktopsSettingsTests.cs`.
 Build the Settings unit-test project with repository scripts before running
-those tests. The existing Settings navigation smoke suite includes the new page.
+the full Settings regression suite, since module metadata and GeneralSettings are shared:
+
+```powershell
+tools/build/build.ps1 -Platform x64 -Configuration Release -Path src/settings-ui/Settings.UI.UnitTests
+vstest.console.exe Release/x64/tests/SettingsTests/Settings.UI.UnitTests.dll /Logger:trx
+```
+ The existing Settings navigation smoke suite includes the new page.
 Follow the repository's supported test runner instructions; do not substitute
 `dotnet test` for the required Windows build/test flow.
 
@@ -95,6 +103,25 @@ attempts are retained and linked. ARM64 execution is not covered by an x64 run.
   runtime cases passed, including minimized and foreign-process crash restoration.
   This run precedes integration and the added double-failure test; it does not
   certify those later changes.
+
+- [Double-failure RED run](https://github.com/Nicolas0315/PowerToys/actions/runs/37323230182),
+  commit `19f793f417`: the new next-start recovery test failed while the previous
+  eight runtime cases passed. Retained per-window restoration intent was added.
+- [Later supplemental run](https://github.com/Nicolas0315/PowerToys/actions/runs/37325867073),
+  commit `b30feb68ca`: 18 model and nine runtime cases passed. Repository integration
+  and fuzz did not pass at this commit.
+- [First repository integration attempt](https://github.com/Nicolas0315/PowerToys/actions/runs/37322745586):
+  solution restore and native Runner build passed, but three StyleCop errors in
+  new Settings files stopped the Settings build. Headers and spacing were fixed.
+- [First fuzz attempt](https://github.com/Nicolas0315/PowerToys/actions/runs/37324656134):
+  a PowerShell unquoted comma in the sanitizer option caused a parser error before
+  compilation. The option was quoted without removing sanitizers or reducing inputs.
+- Independent specification review found an app-hidden owned dialog on another
+  monitor could permit a partial transition. A new model regression failed before
+  the fix; validation now rejects the whole affected group for both Select and Move.
+- Code inspection found installer force-termination could kill both manager and
+  guardian. A hidden manager close endpoint and a protected installer path were
+  added. Endpoint execution is automated; actual uninstall/update remains unexecuted.
 
 ## Required physical/interactive acceptance
 

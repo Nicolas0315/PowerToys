@@ -54,8 +54,8 @@ namespace
         {
             for (const auto& path : paths)
             {
-                std::array<GUID, 1024> desktops{};
-                DWORD bytes = sizeof(desktops);
+                std::vector<GUID> desktops(1024);
+                DWORD bytes = static_cast<DWORD>(desktops.size() * sizeof(GUID));
                 if (RegGetValueW(HKEY_CURRENT_USER, path.c_str(), L"VirtualDesktopIDs", RRF_RT_REG_BINARY, nullptr, desktops.data(), &bytes) != ERROR_SUCCESS || bytes % sizeof(GUID) != 0)
                     continue;
                 for (std::size_t i = 0; i < bytes / sizeof(GUID); ++i)
@@ -378,6 +378,9 @@ namespace
                 return 4;
             waits.push_back(events[i].get());
         }
+        ShutdownWindow shutdown(events[static_cast<std::size_t>(Command::Stop)].get());
+        if (!shutdown)
+            return 14;
         if (runnerPid == 0)
             ResetEvent(events[static_cast<std::size_t>(Command::Stop)].get());
         UniqueHandle runner(runnerPid ? OpenProcess(SYNCHRONIZE, FALSE, runnerPid) : nullptr);

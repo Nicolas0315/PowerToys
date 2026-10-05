@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "resource.h"
 #include "RcResource.h"
+#include "../../src/modules/IndependentDesktops/Constants.h"
 #include <ProjectTelemetry.h>
 #include <spdlog/sinks/base_sink.h>
 #include <filesystem>
@@ -1569,6 +1570,8 @@ UINT __stdcall TerminateProcessesCA(MSIHANDLE hInstall)
 
     std::vector<DWORD> processes;
     const size_t maxProcesses = 4096;
+    DWORD installerSessionId = 0;
+    const bool installerSessionKnown = ProcessIdToSessionId(GetCurrentProcessId(), &installerSessionId) != FALSE;
     DWORD bytes = maxProcesses * sizeof(processes[0]);
     processes.resize(maxProcesses);
 
@@ -1605,7 +1608,6 @@ UINT __stdcall TerminateProcessesCA(MSIHANDLE hInstall)
         L"PowerToys.ImageResizerCLI.exe",
         L"PowerToys.ImageResizer.CLI.exe",
         L"PowerToys.LightSwitchService.exe",
-        L"PowerToys.IndependentDesktops.exe",
         L"PowerToys.PowerDisplay.exe",
         // Also matches the installed shim PowerToys.PowerDisplay.CLI.exe.
         L"PowerToys.PowerDisplay.Cli.exe",
@@ -1674,6 +1676,63 @@ UINT __stdcall TerminateProcessesCA(MSIHANDLE hInstall)
             continue;
         }
         GetModuleBaseNameW(hProcess, hMod, processName, sizeof(processName) / sizeof(wchar_t));
+
+        if (_wcsicmp(processName, IndependentDesktops::ExecutableName) == 0)
+        {
+            DWORD processSessionId = 0;
+            if (!installerSessionKnown || !ProcessIdToSessionId(procID, &processSessionId) || processSessionId != installerSessionId)
+            {
+                WcaLog(LOGMSG_STANDARD, "TerminateProcessesCA: Leaving Independent Desktops process %lu outside the installer session", procID);
+                CloseHandle(hProcess);
+                continue;
+            }
+
+            struct ControlWindowSearch
+            {
+                DWORD processId;
+                bool found;
+            } search{ procID, false };
+
+            auto windowEnumerator = [](HWND hwnd, LPARAM context) -> BOOL
+            {
+                auto* search = reinterpret_cast<ControlWindowSearch*>(context);
+                DWORD windowProcessId = 0;
+                GetWindowThreadProcessId(hwnd, &windowProcessId);
+                if (windowProcessId == search->processId)
+                {
+                    DWORD_PTR result{};
+                    SendMessageTimeoutW(hwnd, WM_CLOSE, 0, 0, SMTO_BLOCK, 500, &result);
+                    search->found = true;
+                }
+                return TRUE;
+            };
+
+            EnumWindows(windowEnumerator, reinterpret_cast<LPARAM>(&search));
+            if (!search.found)
+            {
+                // The guardian deliberately has no window. It exits after its manager
+                // finishes recovery, so it must never be force-terminated by the installer.
+                WcaLog(LOGMSG_STANDARD, "TerminateProcessesCA: No Independent Desktops manager control window for process %lu; leaving it untouched", procID);
+                CloseHandle(hProcess);
+                continue;
+            }
+
+            HANDLE waitProcess = OpenProcess(SYNCHRONIZE, FALSE, procID);
+            if (!waitProcess)
+            {
+                WcaLog(LOGMSG_STANDARD, "TerminateProcessesCA: Sent WM_CLOSE to Independent Desktops process %lu but could not wait for it", procID);
+                CloseHandle(hProcess);
+                continue;
+            }
+
+            if (WaitForSingleObject(waitProcess, 5000) == WAIT_TIMEOUT)
+            {
+                WcaLog(LOGMSG_STANDARD, "TerminateProcessesCA: Independent Desktops process %lu did not exit after WM_CLOSE; leaving it running for recovery", procID);
+            }
+            CloseHandle(waitProcess);
+            CloseHandle(hProcess);
+            continue;
+        }
 
         for (const auto processToTerminate : processesToTerminate)
         {

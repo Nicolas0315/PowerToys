@@ -79,7 +79,12 @@ and wrapper methods are appended to preserve existing values and member order.
 Runner loads the module DLL; the DLL launches the executable by absolute path
 and waits for ready or process exit with a bound. Both binaries are in the explicit
 signing manifest. The installer harvests root build outputs through the existing
-generation process, and both processes are included in uninstall/diagnostic lists.
+generation process. The manager owns an invisible top-level shutdown window;
+the installer requests `WM_CLOSE` and waits up to five seconds in its own session.
+It never forcibly terminates this executable because the guardian shares its name
+and must remain alive until restoration finishes. Across sessions, Runner exit
+is the shutdown signal; a hung application may keep recovery alive and leave files
+in use. Installer execution and file-in-use handling remain acceptance gates.
 
 The draft contribution requires maintainer agreement on the new module and its
 experimental interaction with Task View. Hosted tests establish specific logical

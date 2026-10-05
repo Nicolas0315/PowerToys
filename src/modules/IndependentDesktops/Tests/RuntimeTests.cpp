@@ -87,6 +87,17 @@ int wmain(int argc, wchar_t** argv)
             std::cout << "FAIL " << name << ": " << error.what() << '\n';
         }
     };
+    test("installer_close_requests_stop_without_touching_application", [] {
+        Fixture fixture;
+        UniqueHandle stop(CreateEventW(nullptr, TRUE, FALSE, nullptr));
+        ShutdownWindow shutdown(stop.get());
+        Check(static_cast<bool>(shutdown), "create shutdown endpoint");
+        Check(!IsWindowVisible(shutdown.get()), "shutdown endpoint stays hidden");
+        Check(WaitForSingleObject(stop.get(), 0) == WAIT_TIMEOUT, "no initial shutdown request");
+        SendMessageW(shutdown.get(), WM_CLOSE, 0, 0);
+        Check(WaitForSingleObject(stop.get(), 0) == WAIT_OBJECT_0, "installer close signals stop");
+        Check(IsWindowVisible(fixture.window), "application window stays visible");
+    });
     test("identity_of_real_window", [] {
         Fixture fixture;
         auto id = IdentifyWindow(fixture.window);

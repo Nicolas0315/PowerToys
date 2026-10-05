@@ -55,10 +55,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Build Settings model tests before execution
         run: tools/build/build.ps1 -Platform x64 -Configuration Release -Path src/settings-ui/Settings.UI.UnitTests
-      - name: Run Independent Desktops Settings tests
+      - name: Run Settings regression suite
         run: |
           $vs = & "${env:ProgramFiles(x86)}/Microsoft Visual Studio/Installer/vswhere.exe" -latest -property installationPath
-          & "$vs/Common7/IDE/CommonExtensions/Microsoft/TestWindow/vstest.console.exe" "Release/x64/tests/SettingsTests/Settings.UI.UnitTests.dll" '/TestCaseFilter:FullyQualifiedName~IndependentDesktopsSettingsTests' /Logger:trx
+          & "$vs/Common7/IDE/CommonExtensions/Microsoft/TestWindow/vstest.console.exe" "Release/x64/tests/SettingsTests/Settings.UI.UnitTests.dll" /Logger:trx
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Publish repository build and test evidence
         if: always()
@@ -80,7 +80,7 @@ jobs:
           . tools/build/build-common.ps1
           if (-not (Ensure-VsDevEnvironment)) { exit 1 }
           clang++ --version
-          clang++ -std=c++20 -fsanitize=fuzzer,address -DNOMINMAX -DUNICODE -D_UNICODE src/modules/IndependentDesktops/Fuzz/ArgumentFuzzer.cpp src/modules/IndependentDesktops/Recovery.cpp src/modules/IndependentDesktops/WindowOperations.cpp -luser32 -ladvapi32 -o IndependentDesktopsArgumentFuzzer.exe
+          clang++ -std=c++20 '-fsanitize=fuzzer,address' -DNOMINMAX -DUNICODE -D_UNICODE src/modules/IndependentDesktops/Fuzz/ArgumentFuzzer.cpp src/modules/IndependentDesktops/Recovery.cpp src/modules/IndependentDesktops/WindowOperations.cpp -luser32 -ladvapi32 -o IndependentDesktopsArgumentFuzzer.exe
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Run deterministic fuzz inputs and retain failures
         run: |

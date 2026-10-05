@@ -3,6 +3,42 @@
 #include "WindowOperations.h"
 namespace IndependentDesktops
 {
+    namespace
+    {
+        LRESULT CALLBACK ShutdownProcedure(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
+        {
+            if (message == WM_NCCREATE)
+            {
+                const auto* create = reinterpret_cast<const CREATESTRUCTW*>(lparam);
+                SetWindowLongPtrW(window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(create->lpCreateParams));
+            }
+            if (message == WM_CLOSE)
+            {
+                const auto stop = reinterpret_cast<HANDLE>(GetWindowLongPtrW(window, GWLP_USERDATA));
+                if (stop)
+                    SetEvent(stop);
+                return 0;
+            }
+            return DefWindowProcW(window, message, wparam, lparam);
+        }
+    }
+    ShutdownWindow::ShutdownWindow(HANDLE stopEvent)
+    {
+        const auto instance = GetModuleHandleW(nullptr);
+        constexpr wchar_t name[] = L"PowerToys.IndependentDesktops.Shutdown.6EAF3B79";
+        WNDCLASSW type{};
+        type.lpfnWndProc = ShutdownProcedure;
+        type.hInstance = instance;
+        type.lpszClassName = name;
+        if (!stopEvent || (!RegisterClassW(&type) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS))
+            return;
+        m_window = CreateWindowExW(WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE, name, L"", WS_POPUP, 0, 0, 0, 0, nullptr, nullptr, instance, stopEvent);
+    }
+    ShutdownWindow::~ShutdownWindow()
+    {
+        if (m_window)
+            DestroyWindow(m_window);
+    }
     bool RestoreTaggedWindows()
     {
         struct Intent
