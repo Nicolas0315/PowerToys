@@ -303,12 +303,15 @@ namespace
             if (foreground && IsWindowVisible(foreground))
             {
                 const auto id = m_recovery.Find(foreground);
-                const auto workspace = id ? m_model.Assignment(*id) : std::nullopt;
                 const auto monitor = MonitorName(MonitorFromWindow(foreground, MONITOR_DEFAULTTONEAREST));
+                const auto workspace = id ? m_model.ActivationWorkspace(*id, m_desktop, monitor) : std::nullopt;
                 GUID current{};
                 if (workspace && SUCCEEDED(m_desktops->GetWindowDesktopId(foreground, &current)) && DesktopKey(current) == m_desktop && *workspace != m_model.Selected(m_desktop, monitor))
-                    if (!Apply(m_model.Select(m_desktop, monitor, *workspace)))
+                {
+                    const auto plan = m_model.Select(m_desktop, monitor, *workspace);
+                    if (plan.rejection != Rejection::CrossMonitorGroup && !Apply(plan))
                         return false;
+                }
             }
             for (const auto& monitor : m_monitors)
             {

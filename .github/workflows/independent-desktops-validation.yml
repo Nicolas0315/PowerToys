@@ -4,14 +4,26 @@ on:
     branches: [feature/independent-desktops-per-monitor]
     paths:
       - 'src/modules/IndependentDesktops/**'
+      - 'src/settings-ui/**'
+      - 'src/runner/**'
+      - 'src/common/GPOWrapper/**'
+      - 'src/common/utils/gpo.h'
+      - 'installer/**'
+      - 'PowerToys.slnx'
       - '.github/workflows/independent-desktops-validation.yml'
   pull_request:
     paths:
       - 'src/modules/IndependentDesktops/**'
+      - 'src/settings-ui/**'
+      - 'src/runner/**'
+      - 'src/common/GPOWrapper/**'
+      - 'src/common/utils/gpo.h'
+      - 'installer/**'
+      - 'PowerToys.slnx'
       - '.github/workflows/independent-desktops-validation.yml'
   workflow_dispatch:
 concurrency:
-  group: independent-desktops-${{ github.ref }}
+  group: independent-desktops-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 permissions:
   contents: read

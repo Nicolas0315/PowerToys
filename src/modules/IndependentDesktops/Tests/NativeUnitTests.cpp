@@ -28,6 +28,10 @@ namespace IndependentDesktopsTests
         }
 
     public:
+        TEST_METHOD (foreground_cross_monitor_dialog_cannot_select_unrelated_monitor)
+        {
+            Run("foreground_cross_monitor_dialog_cannot_select_unrelated_monitor");
+        }
         TEST_METHOD (app_hidden_cross_monitor_dialog_still_blocks_group_switch)
         {
             Run("app_hidden_cross_monitor_dialog_still_blocks_group_switch");

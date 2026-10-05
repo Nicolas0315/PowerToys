@@ -44,3 +44,4 @@ and module DLL require entries in `.pipelines/ESRPSigning_core.json`.
 
 - [Visual Studio developer shells](https://learn.microsoft.com/en-us/visualstudio/ide/reference/command-prompt-powershell): explicitly select amd64 target and host to avoid mixing x86 libraries with an x64 compiler.
 - [VSTest console options](https://learn.microsoft.com/en-us/visualstudio/test/vstest-console-options): force x64 for these assemblies and fail when no tests are discovered; an empty discovery is not a successful test execution.
+- [InterlockedCompareExchange](https://learn.microsoft.com/en-us/windows/win32/api/winnt/nf-winnt-interlockedcompareexchange): shared journal state uses explicit full memory barriers when publishing and reading slot metadata.

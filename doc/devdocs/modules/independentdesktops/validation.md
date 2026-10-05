@@ -32,7 +32,7 @@ reused handles, dragged windows, wraparound, reset and capacity refusal.
 `RuntimeTests.cpp` exercises real Win32 identities, guardian readiness, hide/show
 acknowledgement, exclusion of originally hidden windows, marker mismatch, minimized
 state, guardian death, foreign-process crash restoration, double-failure recovery
-and the invisible installer's close endpoint. There are 18 model cases and 10
+and the invisible installer's close endpoint. There are 19 model cases and 10
 runtime cases after these additions; passing evidence must identify the commit.
 
 ## Reproduction commands
@@ -130,6 +130,14 @@ attempts are retained and linked. ARM64 execution is not covered by an x64 run.
 - Code inspection found installer force-termination could kill both manager and
   guardian. A hidden manager close endpoint and a protected installer path were
   added. Endpoint execution is automated; actual uninstall/update remains unexecuted.
+
+- Independent quality review reproduced a foreground dialog moved onto a different
+  monitor selecting that monitor's unrelated workspace. The new foreground
+  regression failed before the fix; activation now requires matching assignment
+  and an unsplit group, and automatic cross-monitor refusals do not stop recovery.
+- Shared journal state reads now use Interlocked barriers as well as writes;
+  plain volatile reads were insufficient to establish ARM64 acquire ordering.
+  x64 tests do not certify ARM64 execution or prove absence of every timing race.
 
 ## Required physical/interactive acceptance
 

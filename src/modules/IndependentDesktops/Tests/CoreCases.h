@@ -220,5 +220,22 @@ inline std::vector<std::pair<std::string, std::function<void()>>> CoreCases()
         Check(plan.hide.empty() && plan.show.empty(), "refused switch cannot hide the root");
         Check(!model.Move(root.id, 1).valid(), "moving that group must also be refused");
     });
+    cases.emplace_back("foreground_cross_monitor_dialog_cannot_select_unrelated_monitor", [] {
+        WorkspaceModel model;
+        Check(model.Commit(model.Select(L"native-1", L"right", 1)), "right selects workspace two");
+        auto left = Window(1, L"left"), root = Window(2, L"right"), dialog = Window(3, L"right");
+        dialog.root = root.id;
+        model.Observe(L"native-1", { left, root, dialog });
+        Check(model.ActivationWorkspace(dialog.id, L"native-1", L"right") == 1, "same-monitor dialog can activate its group");
+        dialog.monitor = L"left";
+        model.Observe(L"native-1", { left, root, dialog });
+        Check(!model.ActivationWorkspace(dialog.id, L"native-1", L"left"), "moved dialog cannot select an unrelated monitor");
+        Check(!model.ActivationWorkspace(dialog.id, L"native-2", L"right"), "other native desktop cannot activate");
+        Check(!model.ActivationWorkspace(root.id, L"native-1", L"right"), "focus cannot select a split group on its root monitor either");
+        Check(model.Selected(L"native-1", L"left") == 0 && model.Select(L"native-1", L"left", 0).hide.empty(), "left selection and visibility remain intact");
+        root.monitor = L"left";
+        model.Observe(L"native-1", { left, root, dialog });
+        Check(model.ActivationWorkspace(root.id, L"native-1", L"left") == 0, "whole group dragged left can activate destination");
+    });
     return cases;
 }

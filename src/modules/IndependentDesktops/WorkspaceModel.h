@@ -215,6 +215,16 @@ namespace IndependentDesktops
             const auto found = m_windows.find(id);
             return found == m_windows.end() ? std::nullopt : std::optional<unsigned>(found->second.workspace);
         }
+        std::optional<unsigned> ActivationWorkspace(const WindowId& id, const std::wstring& desktop, const std::wstring& monitor) const
+        {
+            const auto found = m_windows.find(id);
+            if (found == m_windows.end() || found->second.window.desktop != desktop || found->second.assignedMonitor != monitor)
+                return {};
+            for (const auto& [memberId, member] : m_windows)
+                if (member.window.desktop == desktop && member.window.root == found->second.window.root && member.window.monitor != monitor)
+                    return {}; // Focus must not select an unrelated monitor or split group.
+            return found->second.workspace;
+        }
         Transition Select(const std::wstring& desktop, const std::wstring& monitor, unsigned selection) const
         {
             return Plan(desktop, monitor, selection);

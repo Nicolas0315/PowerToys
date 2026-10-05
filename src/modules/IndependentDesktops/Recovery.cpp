@@ -12,6 +12,12 @@ namespace IndependentDesktops
     {
         constexpr LONG Free = 0, Registered = 1, Armed = 2;
         constexpr DWORD JournalVersion = 1;
+        // Explicit barriers are required for the journal across processes, including
+        // ARM64 where plain /volatile:iso reads do not acquire published metadata.
+        LONG ReadShared(volatile LONG& value)
+        {
+            return InterlockedCompareExchange(&value, 0, 0);
+        }
         struct Slot
         {
             volatile LONG status{};
@@ -65,20 +71,20 @@ namespace IndependentDesktops
             if (!journal)
                 return nullptr;
             for (auto& slot : journal->slots)
-                if (slot.status != Free && slot.id == id)
+                if (ReadShared(slot.status) != Free && slot.id == id)
                     return &slot;
             return nullptr;
         }
         bool RestoreSlot(Slot& slot, DWORD timeout)
         {
-            if (slot.status == Free)
+            if (ReadShared(slot.status) == Free)
                 return true;
             if (!MatchesWindow(slot.id))
             {
                 InterlockedExchange(&slot.status, Free);
                 return true;
             }
-            if (slot.status == Registered)
+            if (ReadShared(slot.status) == Registered)
                 return true;
             if (!ShowWindowAsync(WindowHandle(slot.id), slot.showCommand))
                 return false;
@@ -159,8 +165,8 @@ namespace IndependentDesktops
     {
         if (!m_state->view.data)
             return {};
-        for (const auto& slot : m_state->view.data->slots)
-            if (slot.status != Free && WindowHandle(slot.id) == window && MatchesWindow(slot.id))
+        for (auto& slot : m_state->view.data->slots)
+            if (ReadShared(slot.status) != Free && WindowHandle(slot.id) == window && MatchesWindow(slot.id))
                 return slot.id;
         return {};
     }
@@ -168,8 +174,8 @@ namespace IndependentDesktops
     {
         std::size_t count{};
         if (m_state->view.data)
-            for (const auto& slot : m_state->view.data->slots)
-                if (slot.status != Free)
+            for (auto& slot : m_state->view.data->slots)
+                if (ReadShared(slot.status) != Free)
                     ++count;
         return count;
     }
@@ -185,7 +191,7 @@ namespace IndependentDesktops
         Prune();
         for (auto& slot : m_state->view.data->slots)
         {
-            if (slot.status != Free)
+            if (ReadShared(slot.status) != Free)
                 continue;
             if (++m_state->nextTag == 0)
                 ++m_state->nextTag;
@@ -210,7 +216,7 @@ namespace IndependentDesktops
         if (!m_state->view.data)
             return;
         for (auto& slot : m_state->view.data->slots)
-            if (slot.status != Free && !MatchesWindow(slot.id))
+            if (ReadShared(slot.status) != Free && !MatchesWindow(slot.id))
                 InterlockedExchange(&slot.status, Free);
     }
     bool RecoverySession::Hide(const WindowId& id, DWORD timeoutMs)
@@ -221,9 +227,9 @@ namespace IndependentDesktops
         if (!slot)
             return false;
         const HWND window = WindowHandle(id);
-        if (slot->status == Registered && !IsWindowVisible(window))
+        if (ReadShared(slot->status) == Registered && !IsWindowVisible(window))
             return false;
-        if (slot->status == Registered)
+        if (ReadShared(slot->status) == Registered)
             slot->showCommand = IsIconic(window) ? SW_SHOWMINNOACTIVE : SW_SHOWNA;
         // Publish recovery intent before issuing any asynchronous visibility operation.
         InterlockedExchange(&slot->status, Armed);
@@ -244,7 +250,7 @@ namespace IndependentDesktops
         bool restored = true;
         // Queue every restore first, including windows whose application is unresponsive.
         for (auto& slot : m_state->view.data->slots)
-            if (slot.status == Armed && MatchesWindow(slot.id))
+            if (ReadShared(slot.status) == Armed && MatchesWindow(slot.id))
                 ShowWindowAsync(WindowHandle(slot.id), slot.showCommand);
         for (auto& slot : m_state->view.data->slots)
         {
@@ -262,9 +268,9 @@ namespace IndependentDesktops
         for (auto& slot : m_state->view.data->slots)
         {
             // Never discard the recovery intent of an unacknowledged restore.
-            if (slot.status == Armed)
+            if (ReadShared(slot.status) == Armed)
                 continue;
-            if (slot.status == Registered && MatchesWindow(slot.id))
+            if (ReadShared(slot.status) == Registered && MatchesWindow(slot.id))
             {
                 RemovePropW(WindowHandle(slot.id), RestoreIntentProperty);
                 RemovePropW(WindowHandle(slot.id), RecoveryProperty);
@@ -279,7 +285,7 @@ namespace IndependentDesktops
         view.data = static_cast<Journal*>(MapViewOfFile(mapping.get(), FILE_MAP_ALL_ACCESS, 0, 0, sizeof(Journal)));
         if (!view.data || view.data->version != JournalVersion || !SetEvent(ready.get()))
             return 2;
-        while (view.data->shutdown == 0)
+        while (ReadShared(view.data->shutdown) == 0)
         {
             const DWORD wait = WaitForSingleObject(parent.get(), 100);
             if (wait == WAIT_OBJECT_0)
@@ -300,7 +306,7 @@ namespace IndependentDesktops
                     remaining = true;
                     continue;
                 }
-                if (slot.status == Registered && MatchesWindow(slot.id))
+                if (ReadShared(slot.status) == Registered && MatchesWindow(slot.id))
                 {
                     RemovePropW(WindowHandle(slot.id), RestoreIntentProperty);
                     RemovePropW(WindowHandle(slot.id), RecoveryProperty);
