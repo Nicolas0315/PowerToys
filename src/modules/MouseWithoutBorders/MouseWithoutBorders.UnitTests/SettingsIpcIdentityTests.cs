@@ -166,6 +166,37 @@ public sealed class SettingsIpcIdentityTests
     }
 
     [TestMethod]
+    public async Task CancellingConnectedServerReleasesExclusivePipeName()
+    {
+        var pipeName = $"PowerToys.MWB.v2.UnitTest.{Environment.ProcessId}.{Guid.NewGuid():N}";
+        using var identity = WindowsIdentity.GetCurrent();
+        using var cancellation = new CancellationTokenSource();
+        var connected = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        IpcChannel<TestRpcTarget>.StartVerifiedIpcServer(
+            pipeName,
+            identity.User!,
+            _ =>
+            {
+                connected.TrySetResult();
+                return string.Empty;
+            },
+            cancellation.Token);
+
+        await using var client = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+        await client.ConnectAsync(5000);
+        await connected.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        cancellation.Cancel();
+
+        // Keep the client open: cancelling the listener must also end an active RPC connection.
+        var buffer = new byte[1];
+        Assert.AreEqual(0, await client.ReadAsync(buffer).AsTask().WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.IsTrue(SpinWait.SpinUntil(
+            () => CanCreateExclusivePipe(pipeName, identity.User!),
+            TimeSpan.FromSeconds(5)));
+    }
+
+    [TestMethod]
     public async Task ProductionServerRecoversAfterPipeNameBecomesAvailable()
     {
         var pipeName = $"PowerToys.MWB.v2.UnitTest.{Environment.ProcessId}.{Guid.NewGuid():N}";
@@ -247,6 +278,19 @@ public sealed class SettingsIpcIdentityTests
         return Process.GetCurrentProcess().MainModule?.FileName
             ?? Environment.ProcessPath
             ?? throw new InvalidOperationException("The current process has no executable path.");
+    }
+
+    private static bool CanCreateExclusivePipe(string pipeName, SecurityIdentifier userSid)
+    {
+        try
+        {
+            using var server = RestrictedNamedPipeServer.Create(pipeName, userSid);
+            return true;
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            return false;
+        }
     }
 
     private sealed class TestRpcTarget

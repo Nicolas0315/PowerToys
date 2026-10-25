@@ -250,6 +250,10 @@ namespace MouseWithoutBorders.Class
             {
                 Logger.Log(e);
             }
+            finally
+            {
+                IpcHelper.CreateIpcServer(true);
+            }
         }
 
         private interface ISettingsSyncHelper
@@ -453,7 +457,7 @@ namespace MouseWithoutBorders.Class
             }
         }
 
-        private static SecurityIdentifier GetInteractiveSessionUserSid(int sessionId)
+        internal static SecurityIdentifier GetInteractiveSessionUserSid(int sessionId)
         {
             IntPtr userToken = IntPtr.Zero;
             try
