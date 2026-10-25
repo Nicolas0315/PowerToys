@@ -17,14 +17,23 @@ namespace Microsoft.PowerToys.Settings.UI.Library.Utilities
     public static class MouseWithoutBordersIpc
     {
         public const string SettingsSyncProtocol = "PowerToys.MouseWithoutBorders.v2.SettingsSync";
+        public const string ClipboardProtocol = "PowerToys.MouseWithoutBorders.v2.Clipboard";
         public const string SettingsExecutableFileName = "PowerToys.Settings.exe";
         public const string MouseWithoutBordersExecutableFileName = "PowerToys.MouseWithoutBorders.exe";
+        public const string ClipboardHelperExecutableFileName = "PowerToys.MouseWithoutBordersHelper.exe";
 
         public static string GetSettingsSyncPipeName(int sessionId)
         {
             ArgumentOutOfRangeException.ThrowIfNegative(sessionId);
 
             return $"{SettingsSyncProtocol}.Session.{sessionId}";
+        }
+
+        public static string GetClipboardPipeName(int sessionId)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(sessionId);
+
+            return $"{ClipboardProtocol}.Session.{sessionId}";
         }
 
         public static void GrantCurrentProcessQueryAccess(SecurityIdentifier allowedUser)

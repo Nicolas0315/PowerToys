@@ -206,6 +206,10 @@ internal static class InitAndCleanup
         {
             Logger.Log(e);
         }
+        finally
+        {
+            IpcHelper.CreateIpcServer(true);
+        }
     }
 
     private static long lastReleaseAllKeysCall;

@@ -14,6 +14,13 @@ namespace MouseWithoutBorders.UnitTests;
 public sealed class IpcSerializationCompatibilityTests
 {
     [TestMethod]
+    public void ClipboardPayloadKeepsExistingJsonShape()
+    {
+        Assert.AreEqual("""{"_type":1,"string":"clipboard-text"}""", JsonConvert.SerializeObject(new ByteArrayOrString("clipboard-text")));
+        Assert.AreEqual("""{"_type":0,"byteArray":"AQID","string":null}""", JsonConvert.SerializeObject(new ByteArrayOrString(new byte[] { 1, 2, 3 })));
+    }
+
+    [TestMethod]
     public void SettingsSyncPayloadKeepsExistingJsonShape()
     {
         var contract = typeof(Program).GetNestedType("ISettingsSyncHelper", BindingFlags.NonPublic);

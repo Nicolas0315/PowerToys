@@ -11,7 +11,6 @@ using System.IO;
 using System.IO.Pipes;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
@@ -169,49 +168,6 @@ namespace MouseWithoutBorders
     internal sealed class IpcChannel<T>
         where T : new()
     {
-        public static T StartIpcServer(string pipeName, CancellationToken cancellationToken)
-        {
-            SecurityIdentifier securityIdentifier = new SecurityIdentifier(
-WellKnownSidType.AuthenticatedUserSid, null);
-
-            PipeSecurity pipeSecurity = new PipeSecurity();
-            pipeSecurity.AddAccessRule(new PipeAccessRule(
-                securityIdentifier,
-                PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance,
-                AccessControlType.Allow));
-
-            _ = Task.Run(
-                async () =>
-                {
-                    try
-                    {
-                        while (!cancellationToken.IsCancellationRequested)
-                        {
-                            using (var serverChannel = NamedPipeServerStreamAcl.Create(pipeName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, pipeSecurity))
-                            {
-                                await serverChannel.WaitForConnectionAsync();
-                                var taskRpc = JsonRpc.Attach(serverChannel, new T());
-                                await taskRpc.Completion;
-                            }
-                        }
-                    }
-                    catch (OperationCanceledException)
-                    {
-                    }
-                    catch (Exception e)
-                    {
-#if MM_HELPER
-                        _ = e;
-#else
-                        Logger.Log(e);
-#endif
-                    }
-                },
-                cancellationToken);
-
-            return default(T);
-        }
-
         public static T StartVerifiedIpcServer(
             string pipeName,
             SecurityIdentifier allowedUser,
@@ -244,7 +200,7 @@ WellKnownSidType.AuthenticatedUserSid, null);
                             if (!string.IsNullOrEmpty(rejectionReason))
                             {
 #if !MM_HELPER
-                                Logger.Log($"Rejected Settings IPC client: {rejectionReason}");
+                                Logger.Log($"Rejected IPC client: {rejectionReason}");
 #endif
                                 if (serverChannel.IsConnected)
                                 {
@@ -255,8 +211,8 @@ WellKnownSidType.AuthenticatedUserSid, null);
                                 continue;
                             }
 
-                            var taskRpc = JsonRpc.Attach(serverChannel, new T());
-                            await taskRpc.Completion;
+                            using var taskRpc = JsonRpc.Attach(serverChannel, new T());
+                            await taskRpc.Completion.WaitAsync(cancellationToken);
                         }
                         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                         {
@@ -285,12 +241,10 @@ WellKnownSidType.AuthenticatedUserSid, null);
 
     internal sealed class IpcHelper
     {
-        private const string ChannelName = "MouseWithoutBorders";
-        private const string RemoteObjectName = "ClipboardHelper";
-
 #if !MM_HELPER
         private static void CleanupStream()
         {
+            IpcChannelHelper.IpcChannelCreated = false;
             if (_serverTaskCancellationSource != null)
             {
                 _serverTaskCancellationSource.Cancel();
@@ -311,10 +265,33 @@ WellKnownSidType.AuthenticatedUserSid, null);
                     return;
                 }
 
+                // Network sockets reopen independently of the helper's long-lived RPC connection.
+                if (_serverTaskCancellationSource != null)
+                {
+                    return;
+                }
+
+                using var currentIdentity = WindowsIdentity.GetCurrent();
+                var processUserSid = currentIdentity.User ?? throw new InvalidOperationException("The process token has no user SID.");
+                var sessionId = Process.GetCurrentProcess().SessionId;
+                var interactiveUserSid = Program.ResolveSettingsIpcUserSid(processUserSid, sessionId, Program.GetInteractiveSessionUserSid);
+                Program.GrantSettingsIpcProcessQueryAccessIfNeeded(processUserSid, interactiveUserSid, MouseWithoutBordersIpc.GrantCurrentProcessQueryAccess);
+
                 _serverTaskCancellationSource = new CancellationTokenSource();
                 CancellationToken cancellationToken = _serverTaskCancellationSource.Token;
 
-                IpcChannel<ClipboardHelper>.StartIpcServer(ChannelName + "/" + RemoteObjectName, cancellationToken);
+                IpcChannel<ClipboardHelper>.StartVerifiedIpcServer(
+                    MouseWithoutBordersIpc.GetClipboardPipeName(sessionId),
+                    interactiveUserSid,
+                    stream => NamedPipePeerVerification.TryVerifyClient(
+                        stream,
+                        MouseWithoutBordersIpc.ClipboardHelperExecutableFileName,
+                        interactiveUserSid.Value,
+                        sessionId,
+                        out var rejectionReason)
+                        ? string.Empty
+                        : rejectionReason,
+                    cancellationToken);
                 IpcChannelHelper.IpcChannelCreated = true;
             }
             catch (Exception e)
@@ -324,26 +301,40 @@ WellKnownSidType.AuthenticatedUserSid, null);
                 Logger.Log(e);
             }
         }
-#else
+#endif
+
         internal static IClipboardHelper CreateIpcClient()
         {
+            NamedPipeClientStream stream = null;
             try
             {
-                var stream = new NamedPipeClientStream(".", ChannelName + "/" + RemoteObjectName, PipeDirection.InOut, PipeOptions.Asynchronous);
+                using var currentIdentity = WindowsIdentity.GetCurrent();
+                var userSid = currentIdentity.User ?? throw new InvalidOperationException("The process token has no user SID.");
+                var sessionId = Process.GetCurrentProcess().SessionId;
+                stream = new NamedPipeClientStream(".", MouseWithoutBordersIpc.GetClipboardPipeName(sessionId), PipeDirection.InOut, PipeOptions.Asynchronous);
 
-                stream.Connect();
+                stream.Connect(5000);
+                if (!NamedPipePeerVerification.TryVerifyServer(
+                        stream,
+                        MouseWithoutBordersIpc.MouseWithoutBordersExecutableFileName,
+                        userSid.Value,
+                        sessionId,
+                        allowLocalSystem: true,
+                        out var rejectionReason))
+                {
+                    throw new UnauthorizedAccessException($"Rejected clipboard IPC server: {rejectionReason}");
+                }
 
                 return JsonRpc.Attach<IClipboardHelper>(stream);
             }
             catch (Exception e)
             {
+                stream?.Dispose();
                 EventLogger.LogEvent(e.Message, EventLogEntryType.Error);
             }
 
             return null;
         }
-#endif
-
     }
 
     internal static class EventLogger

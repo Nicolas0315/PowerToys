@@ -77,6 +77,7 @@ appwindow
 appwiz
 appxpackage
 APSTUDIO
+AQID
 AQS
 Aquadrant
 ARCHITEW

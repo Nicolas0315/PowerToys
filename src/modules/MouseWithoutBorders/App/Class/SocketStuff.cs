@@ -458,18 +458,6 @@ namespace MouseWithoutBorders.Class
             {
                 Common.ReleaseSocketMutex();
             }
-
-            if (!Common.RunOnLogonDesktop && !Common.RunOnScrSaverDesktop)
-            {
-                try
-                {
-                    IpcHelper.CreateIpcServer(true);
-                }
-                catch (Exception e)
-                {
-                    Logger.Log(e);
-                }
-            }
         }
 
         private Exception CreateSocket()
